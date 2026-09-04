@@ -126,7 +126,7 @@ Facial expression engine. All face writes go through Mfg Fix NG.
 | `ahegaoitems` | `""` | Comma-separated `Plugin.esp\|FormID` (hex local id, `0x` optional; plugin names may contain spaces), up to 16. While an actor wears any listed item, SLO VE **pauses its own expression writes** for that actor — a second yield alongside the built-in SexLab Survival (`_SLS_AhegaoStateChange`) hook, for any mod that signals ahegao by equipping an item. Empty = off. |
 | `ahegaostoragekeys` | `"TongueOn"` | Same yield, keyed on **StorageUtil int keys** instead of items: while any listed key reads `> 0` on an actor, expression writes pause. The robust way to detect a mod whose many tongue/face variants all set one key — the default catches the Artsick **Ahegao** mod (`AhegaoTongues.esp`), which sets `TongueOn` per actor while its tongue is on. Comma-separated key names, up to 16; harmless (reads `0`) when the mod isn't installed. Empty = off. |
 | `chancetostickouttongueduringintense` | `30` | Percent roll per update, intense stages. |
-| `chancetostickouttongueduringattacking` | `30` | Percent roll per update, attacking stages. |
+| `chancetostickouttongueduringattacking` | `10` | Percent roll per update, attacking stages (givers incl. male partners, cowgirl riders). |
 | `tonguemouthopenthreshold` | `0.4` | *(float)* **Jaw gate** — minimum measured mouth-open before a tongue is allowed to show, so it never clips through a closed mouth. |
 | `printdebug` | `0` | Print expression decisions. |
 

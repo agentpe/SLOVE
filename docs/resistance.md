@@ -65,8 +65,15 @@ The **break** message itself (*"Your will breaks…"*, when willpower first hits
 |---|---|
 | **Voice** switches to broken/begging line selection | `enablebrokenstatus = 1` |
 | **Face** shifts toward the broken/ahegao look | always (while `resistance.enable = 1`) |
+| **The PC loses the enjoyment keys** — SexLab P+'s enjoyment-game hotkeys (raise / hold back) stop working while the player is broken. No willpower, no agency. | `brokenblockenjkeys = 1` |
+| **Partners enjoy it more** — while a broken actor is in the scene, every scene partner's enjoyment grows `brokenpartnerenjmult`% faster (any broken actor grants it, player or NPC). | `brokenpartnerenjmult > 0` (ships `10`) |
 
 Set `enablebrokenstatus = 0` to keep the broken *face* but not the broken *voice*.
+
+The two gameplay effects are **P+ variant only** (the classic/SLSO build keeps voice and face effects only) and engage both when the break happens mid-scene and when an actor enters a scene already broken. Details of the key block:
+
+- It flips the SexLab P+ MCM settings *"Enable Enjoyment Game"* and *"game required on high enjoyment"* off for the duration — the second one must fall with the keys, or a broken player would stall at 80 enjoyment with no working key to climb further; broken, she cruises past 80 to orgasm on passive growth alone.
+- Your original MCM values are remembered and **restored at scene end**. If the game crashes or quits while the block is live, they are restored on the next game load instead (as soon as no scene is running). If the P+ minigame was already off in your MCM, nothing is touched.
 
 ## Who participates
 

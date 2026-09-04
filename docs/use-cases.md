@@ -127,6 +127,8 @@ Logs to watch: `Documents\My Games\Skyrim Special Edition\SKSE\AudioUtil.log`
 | E4 | **Mid-scene reload doesn't reset drain** | Drain partway, save, reload | Willpower **persists**; no re-recovery, no wipe | `SLOVE_LastSexTime` re-stamped at scene start; `DumpState` shows same willpower |
 | E5 | **Disable drops broken state** | `resistance.enable=0` + `SLOVE_Config Reload` | Broken state cleared; drain stops | `DumpState` shows resistance off |
 | E6 | **Victim insertion trauma** | Forced insertion onto a submissive receiver | Extra willpower hit via `SLOVE_ResDebt`, drained by that actor's Resistance | `sfx`/`resistance` debug shows `SLOVE_ResDebt` write + drain |
+| E7 | **Broken PC loses the enjoyment keys** (P+ only) | P+ MCM "Enjoyment Game" on, `brokenblockenjkeys=1`, break the PC (also with "game required on high enjoyment" on) | Raise/holdback keys go dead the moment she breaks; enjoyment still climbs past 80 to orgasm (no stall); other scene hotkeys unaffected; both MCM toggles read ON again after the scene (or after the next load if the game crashed mid-block) | `printdebug` "enjoyment-game hotkeys disabled/restored"; `SLOVE_EnjGameBlocked`/`SLOVE_EnjHighReqBlocked` markers cleared post-scene; keys = user |
+| E8 | **Partners enjoy a broken actor more** (P+ only) | `brokenpartnerenjmult>0`, scene with a broken actor (or break one mid-scene) | Every partner's enjoyment grows `brokenpartnerenjmult`% faster while the broken actor is in the scene; bonus is removed at scene end | `printdebug` "partners gain +N% enjoyment rate"; `slovetest anim` enjoyment dump climbs faster (raise the key to `100` to make it obvious in testing) |
 
 ## F. Robustness & lifecycle
 

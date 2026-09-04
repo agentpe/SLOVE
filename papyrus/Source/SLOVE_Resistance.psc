@@ -5,8 +5,11 @@ Scriptname SLOVE_Resistance extends ActiveMagicEffect
  willpower drains by the RISE in SexLab enjoyment x config multipliers; at 0 the
  actor "breaks". State lives in StorageUtil (SLOVE_Resistance 0-100,
  SLOVE_BrokenPoints 0-127); config in SLOVE.toml [resistance] plus the two
- SLOVE/Resistance*.json race tables. Firewall: reads SexLab for its own thread
- (like SLOVE_Expressions) but takes stage LABELS from the Director.}
+ SLOVE/Resistance*.json race tables. While broken, the actor's scene partners
+ gain an enjoyment-rate bonus and a broken PC loses the P+ enjoyment-game
+ hotkeys (EngageBrokenEffects; key block via the Director). Firewall: reads
+ SexLab for its own thread (like SLOVE_Expressions) but takes stage LABELS
+ from the Director.}
 
 SLOVE_Director Property MasterScript Auto
 SexLabFramework Property SexLab Auto
@@ -35,12 +38,18 @@ int npcbrokenpoints
 int soshugeppsize
 int pcnotifyinterval
 int scenestartnotification
+int brokenblockenjkeys
+int brokenpartnerenjmult
 int enableprintdebug
 
 bool IsHugePP
 bool IsVictim
 float AccumulatedResistanceDamage = 0.0
 int LastEnjoyment = 0
+; broken gameplay effects (engaged once per scene while this actor is broken):
+; tracks whether the partner enjoyment-rate bonus is currently applied to the
+; scene partners, so OnEffectFinish can subtract exactly what was added
+bool PartnerEnjBonusActive = false
 ; highest interval band the PC has been notified about this scene (100 = none yet);
 ; seeded from the starting willpower so we never announce a band she began below
 int LastNotifiedBand = 100
@@ -63,6 +72,24 @@ EndEvent
 Event OnEffectFinish(Actor akTarget, Actor akCaster)
 	; stamp scene-end game time so the next scene's lazy recovery has a reference
 	StorageUtil.SetFloatValue(Actorref, "SLOVE_LastSexTime", Utility.GetCurrentGameTime())
+	; unwind the broken gameplay effects. The partner-rate subtraction is a safe
+	; no-op on an already-torn-down thread (P+ null-checks the alias), and the
+	; next scene resets the mults anyway; the key restore is marker-keyed and
+	; idempotent, so calling it when nothing was blocked costs nothing
+	if PartnerEnjBonusActive && CurrentThread != None
+		float bonus = brokenpartnerenjmult / 100.0
+		int i = 0
+		while i < actorlist.length
+			if actorlist[i] != Actorref
+				CurrentThread.ModEnjoymentMult(actorlist[i], 0.0 - bonus, true)
+			endif
+			i += 1
+		endwhile
+		PartnerEnjBonusActive = false
+	endif
+	if IsPlayer && MasterScript != None
+		MasterScript.RestoreEnjoymentKeys()
+	endif
 EndEvent
 
 Function PerformInitialization()
@@ -117,7 +144,40 @@ Function PerformInitialization()
 
 	SeedNotifyBand()
 
+	; an actor who ENTERS the scene still broken engages the broken gameplay
+	; effects from the start (the mid-scene break engages them in
+	; AddResistanceDamage). Safe from P+'s enjoyment reset: the Director applies
+	; this spell on AnimationStart, which P+ sends only after every alias has
+	; passed OnStartPlaying (where _ModEnjMult is reset to 1.0)
+	if IsBroken()
+		EngageBrokenEffects()
+	endif
+
 	RegisterForSingleUpdate(0.1)
+EndFunction
+
+; ---- broken gameplay effects (keys + partner enjoyment bonus) ----
+; While this actor is broken: (a) scene partners' enjoyment grows faster - a
+; sustained P+ rate bonus, additive so several broken actors stack sanely and
+; OnEffectFinish can subtract it back; inert on NPC-only threads (P+ runs no
+; enjoyment engine there); (b) if this actor is the PLAYER, the P+
+; enjoyment-game hotkeys are disabled through the Director (no willpower = no
+; agency). Engaged at most once per scene.
+Function EngageBrokenEffects()
+	if brokenpartnerenjmult > 0 && !PartnerEnjBonusActive && CurrentThread != None
+		int i = 0
+		while i < actorlist.length
+			if actorlist[i] != Actorref
+				CurrentThread.ModEnjoymentMult(actorlist[i], brokenpartnerenjmult / 100.0, true)
+			endif
+			i += 1
+		endwhile
+		PartnerEnjBonusActive = true
+		printdebug("broken - partners gain +" + brokenpartnerenjmult + "% enjoyment rate")
+	endif
+	if IsPlayer && brokenblockenjkeys == 1 && MasterScript != None
+		MasterScript.BlockEnjoymentKeys()
+	endif
 EndFunction
 
 Function InitializeConfig()
@@ -135,6 +195,8 @@ Function InitializeConfig()
 	soshugeppsize      = SLOVE_Config.GetInt("director.soshugeppsize", 6)
 	pcnotifyinterval   = SLOVE_Config.GetInt("resistance.pcnotifyinterval", 25)
 	scenestartnotification = SLOVE_Config.GetInt("resistance.scenestartnotification", 1)
+	brokenblockenjkeys = SLOVE_Config.GetInt("resistance.brokenblockenjkeys", 1)
+	brokenpartnerenjmult = SLOVE_Config.GetInt("resistance.brokenpartnerenjmult", 10)
 	enableprintdebug   = SLOVE_Config.GetInt("director.printdebug", 0)
 EndFunction
 
@@ -207,6 +269,7 @@ Function AddResistanceDamage(float value)
 		else
 			SetBrokenPoints(npcbrokenpoints)
 		endif
+		EngageBrokenEffects()
 	endif
 EndFunction
 

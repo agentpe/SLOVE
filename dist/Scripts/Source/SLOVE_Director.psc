@@ -172,6 +172,54 @@ bool Function IsBroken(actor char)
 	return enableresistance == 1 && StorageUtil.GetIntValue(char, "SLOVE_BrokenPoints", 0) > 0
 EndFunction
 
+;-------- broken-PC enjoyment-game block (called by SLOVE_Resistance) --------
+;While the PC is broken she has no agency over the P+ enjoyment game: the two
+;hotkeys are killed by flipping Config.GameEnabled (P+ re-checks it on every
+;key press and VR gesture, so the flip bites mid-scene). bGameRequiredOnHighEnj
+;must fall with the keys - P+ stalls the PLAYER's passive enjoyment above 80 on
+;that raw setting (independent of GameEnabled) and the only way past 80 is the
+;now-dead RaiseEnj minigame, so a broken PC would be stranded short of orgasm.
+;P+ persists its settings to disk on every game save, so the user's original
+;values are kept as global StorageUtil markers (set only for settings that were
+;actually ON) and restored at scene end (SLOVE_Resistance.OnEffectFinish) or,
+;after a crash/quit mid-block, by the Maintenance() net on the next load.
+Function BlockEnjoymentKeys()
+	sslSystemConfig cfg = SexLabUtil.GetConfig()
+	if cfg == None
+		return
+	endif
+	if cfg.GameEnabled && StorageUtil.GetIntValue(None, "SLOVE_EnjGameBlocked", 0) == 0
+		StorageUtil.SetIntValue(None, "SLOVE_EnjGameBlocked", 1)
+		cfg.GameEnabled = false
+		printdebug("PC broken - enjoyment-game hotkeys disabled")
+	endif
+	if cfg.GameRequiredOnHighEnj && StorageUtil.GetIntValue(None, "SLOVE_EnjHighReqBlocked", 0) == 0
+		StorageUtil.SetIntValue(None, "SLOVE_EnjHighReqBlocked", 1)
+		cfg.GameRequiredOnHighEnj = false
+		printdebug("PC broken - high-enjoyment minigame requirement lifted")
+	endif
+EndFunction
+
+Function RestoreEnjoymentKeys()
+	if StorageUtil.GetIntValue(None, "SLOVE_EnjGameBlocked", 0) == 0 && StorageUtil.GetIntValue(None, "SLOVE_EnjHighReqBlocked", 0) == 0
+		return ;nothing was blocked
+	endif
+	sslSystemConfig cfg = SexLabUtil.GetConfig()
+	if cfg == None
+		return ;markers kept - restore is retried at the next scene end / game load
+	endif
+	if StorageUtil.GetIntValue(None, "SLOVE_EnjGameBlocked", 0) == 1
+		cfg.GameEnabled = true
+		StorageUtil.UnsetIntValue(None, "SLOVE_EnjGameBlocked")
+		printdebug("Enjoyment-game hotkeys restored")
+	endif
+	if StorageUtil.GetIntValue(None, "SLOVE_EnjHighReqBlocked", 0) == 1
+		cfg.GameRequiredOnHighEnj = true
+		StorageUtil.UnsetIntValue(None, "SLOVE_EnjHighReqBlocked")
+		printdebug("High-enjoyment minigame requirement restored")
+	endif
+EndFunction
+
 Function Maintenance()
 
 	SLOVE_Log.InitLog()  ; open the SLOVE user log (OnInit + every reload)
@@ -187,6 +235,17 @@ Function Maintenance()
 	;made mid-ahegao keeps PC moans off the mouth after the reload (PlaySound
 	;reads this marker per line; nothing is latched in the DLL)
 	StorageUtil.SetIntValue(playerref, "SLOVE_FaceOwnsMouth_SLS", StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0))
+
+	;enjoyment-game block net: a crash/quit while the broken-PC block was live
+	;leaves the P+ settings flipped (and P+ saves them to disk on every game
+	;save). If the markers are set and no player scene survived the load, hand
+	;the settings back now; a save made mid-scene keeps the block until that
+	;scene ends (SLOVE_Resistance restores in OnEffectFinish).
+	if StorageUtil.GetIntValue(None, "SLOVE_EnjGameBlocked", 0) == 1 || StorageUtil.GetIntValue(None, "SLOVE_EnjHighReqBlocked", 0) == 1
+		if SexLab == None || SexLab.GetThreadByActor(playerref) == None
+			RestoreEnjoymentKeys()
+		endif
+	endif
 
 Endfunction
 

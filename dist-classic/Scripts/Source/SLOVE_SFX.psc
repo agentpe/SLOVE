@@ -118,6 +118,13 @@ EndEvent
 
 Event OnUpdate()
 
+	;hold while a menu has the scene frozen (see GamePaused) - slaps and squelches
+	;shouldn't keep firing over an animation that isn't moving
+	if GamePaused()
+		RegisterForSingleUpdate(0.5)
+		return
+	endif
+
 	HentairimUpdateStageData()
 	;Ends if the actor is no longer in scene but the magic stuck. AnimationisEnding is the
 	;PC scene's teardown flag - honor it only for a PC-scene actor, else a concurrent PC
@@ -549,6 +556,11 @@ Bool CanPlayReverseIn
 ;See docs\classic-sexlab-port.md.
 
 Function CalculateAndPlayVelocitySFX()
+;the velocity/impact streams play straight through AudioUtil, so the voice
+;engine's freeze hold never reached them: held here at the entry point.
+	If GamePaused()
+		Return
+	EndIf
 	;no velocity data on classic
 EndFunction
 
@@ -610,6 +622,9 @@ EndFunction
 
 
 Function RunAdaptiveVelocitySFX()
+	If GamePaused()
+		Return
+	EndIf
 	;no velocity data on classic
 EndFunction
 
@@ -621,9 +636,16 @@ EndFunction
 Function PlaySFX()
 	printdebug("Playing Normal Hentairim SFX")
 	while !Masterscript.AnimationisEnding() && DirectorLastLabelTime == MasterScript.GetDirectorLastLabelTime() && DirectorLastPhysicsLabelTime == MasterScript.GetDirectorLastPhysicsLabelTime() && SFXtoPlay
-		ProcessContactEdges()
-		PlaySound( SFXtoPlay , actorlist[0] , true) ;PlaySFXAndWait - blocks for the clip, so the loop is already paced by clip length
-		utility.wait(normalpoll)
+		if GamePaused()
+			;the loop's pacing IS PlaySound's blocking wait; while the scene is frozen
+			;that wait returns instantly, so hold here instead of spinning through
+			;ProcessContactEdges and the three Director externals every poll
+			utility.wait(0.5)
+		else
+			ProcessContactEdges()
+			PlaySound( SFXtoPlay , actorlist[0] , true) ;PlaySFXAndWait - blocks for the clip, so the loop is already paced by clip length
+			utility.wait(normalpoll)
+		endif
 	endwhile
 EndFunction
 
@@ -645,6 +667,9 @@ Actor LastPenReceiver
 ;edge one-shots get their own instance slot: PlaySound()'s channel is the lane
 ;for the continuous body SFX, and sharing it would cut those off
 Function PlayContactSound(String theSound, Actor actorMakingSound)
+	If GamePaused()
+		Return
+	EndIf
 	;the channel natively stops the previous contact one-shot (per actor, so the
 	;effect instances don't cut each other's edges)
 	AudioUtil.PlaySFX(theSound, actorMakingSound, 1.0, "sfx", "sfx_contact_" + position)
@@ -1072,7 +1097,34 @@ int Function GetLegacyStageNum(String asScene, String asStage)
 	return asStage as int
 EndFunction
 
+
+;--------------------------- menu freeze ------------------------------------
+;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet
+int audioUtilPauseAPI
+
+;True while a menu has the scene frozen. SKSE Menu Framework (and other ImGui
+;overlay menus) freeze the game by setting Main::freezeTime WITHOUT entering
+;menu mode, so the Papyrus VM keeps ticking right through it: Utility.Wait,
+;RegisterForSingleUpdate and even Utility.IsInMenuMode() all see a running game,
+;and this engine kept firing sounds over a frozen animation. AudioUtil
+;reads the freeze flag natively (API v7) and also reports real menu-mode pauses.
+;Older AudioUtil: probed once, then this is always false = the previous behavior.
+bool Function GamePaused()
+	if audioUtilPauseAPI == 0
+		if AudioUtil.GetAPIVersion() >= 7
+			audioUtilPauseAPI = 1
+		else
+			audioUtilPauseAPI = -1
+		endif
+	endif
+	return audioUtilPauseAPI == 1 && AudioUtil.IsGamePaused()
+EndFunction
+
 Function PlaySound(String theSound, Actor actorMakingSound, Bool waitForCompletion = True)
+	;a spinner's own wait can span a menu opening - don't let the sound land after it
+	If GamePaused()
+		Return
+	EndIf
 	;per-actor channel: each actor's body-SFX stream replaces only its own previous
 	;sound - a shared channel made the actors' loops cut each other off every play
 	If waitForCompletion

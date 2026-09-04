@@ -454,7 +454,7 @@ Function PlayCreatureBreathing()
 	endif
 	creatureBreathCooldown = Utility.RandomFloat(minPause, maxPause)
 	printdebug("creature breathing: " + creature.getdisplayname())
-	MasterScript.PlaySound("Breathing", creature, False, "partner_low", "slove_np" + creature.GetFormID())
+	MasterScript.PlaySound("Breathing", creature, False, "partner_low", "slove_np" + creature.GetFormID(), BuildFacts(creature))
 EndFunction
 
 ;Post-nut lines belong to whoever actually climaxed
@@ -526,7 +526,7 @@ Event IVDTOnOrgasm(Form actorRef, Int thread)
 
 		if (IsSuckingoffOther() || IsgettingPenetrated()) && (orgasmerIsVoicedMale || orgasmerIsVoicedCreature)
 			printdebug("Playing DefaultMaleOrgasm sound.")
-			PlaySound("Orgasm", mainFemaleActor, soundPriority = 3, waitForCompletion = False, debugtext ="DefaultMaleOrgasm", voiceActor = actorHavingOrgasm)
+			PlaySound("Orgasm", mainFemaleActor, soundPriority = 3, waitForCompletion = False, debugtext ="DefaultMaleOrgasm", voiceActor = actorHavingOrgasm, extraFacts = "mine")
 		endif
 
 		;female NPC partner climax: voice HER Orgasm on her own slot/channel.
@@ -537,7 +537,7 @@ Event IVDTOnOrgasm(Form actorRef, Int thread)
 		;A gagged or unconscious-victim NPC is still caught by PlaySound's guards.
 		if orgasmerIsVoicedFemaleNPC
 			printdebug("Playing female NPC orgasm sound.")
-			PlaySound("Orgasm", actorHavingOrgasm, soundPriority = 3, waitForCompletion = False, debugtext = "Orgasm", forceFemaleVoice = true)
+			PlaySound("Orgasm", actorHavingOrgasm, soundPriority = 3, waitForCompletion = False, debugtext = "Orgasm", forceFemaleVoice = true, extraFacts = "mine")
 		endif
 
 		if StorageUtil.GetIntValue(MainFemaleActor, "HandlingMaleOrgasm", 0) != 0
@@ -557,9 +557,9 @@ Event IVDTOnOrgasm(Form actorRef, Int thread)
 				if ishugepp && (actorHavingOrgasm == mainMaleActor || SexLab.getsex(actorHavingOrgasm) > 2)
 					if voicevariation == "B"
 						;Insertion Over The Top
-						PlaySound("InsertionAnalExcited", mainFemaleActor, debugtext="Insertion Over The Top")
+						PlaySound("InsertionAnalExcited", mainFemaleActor, debugtext="Insertion Over The Top", extraFacts = "theirs")
 					else
-						PlaySound("SurprisedByMaleOrgasm", mainFemaleActor, soundPriority = 3 , debugtext ="SurprisedByMaleOrgasm")
+						PlaySound("SurprisedByMaleOrgasm", mainFemaleActor, soundPriority = 3 , debugtext ="SurprisedByMaleOrgasm", extraFacts = "theirs")
 					endif
 					ASLAddThickCumleak()
 					if Utility.randomint(1,5) == 1
@@ -568,9 +568,9 @@ Event IVDTOnOrgasm(Form actorRef, Int thread)
 				else
 					if voicevariation == "B" && femaleisvictim()
 						;kneejerk intense
-						PlaySound("AfterGape", mainFemaleActor, soundPriority = 2 , debugtext = "KneeJerk Intense")
+						PlaySound("AfterGape", mainFemaleActor, soundPriority = 2 , debugtext = "KneeJerk Intense", extraFacts = "theirs")
 					else
-						PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "KneeJerk")
+						PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "KneeJerk", extraFacts = "theirs")
 					endif
 				endif
 
@@ -578,26 +578,26 @@ Event IVDTOnOrgasm(Form actorRef, Int thread)
 				printdebug("Playing kneejerk sound.")
 				if voicevariation == "B"
 					;KneeJerk
-					PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "KneeJerk")
+					PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "KneeJerk", extraFacts = "theirs")
 				else
-					PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "MaleOrgasmNonOral")
+					PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "MaleOrgasmNonOral", extraFacts = "theirs")
 				endif
 			ElseIf IsSuckingoffOther()
 				Utility.Wait(Utility.RandomFloat(0.5, 1.5))
 				printdebug("Playing MaleOrgasmOral sound.")
 				if voicevariation == "B"
 					;Male Orgasmed Inside Mouth
-					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "Male Orgasmed Inside Mouth")
+					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "Male Orgasmed Inside Mouth", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
 				else
-					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "MaleOrgasmOral")
+					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "MaleOrgasmOral", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
 				endif
 			elseif ishugepp
 				printdebug("Playing SurprisedByMaleOrgasm sound.")
 				if voicevariation == "B"
 					;Insertion Over The Top
-					PlaySound("InsertionAnalExcited", mainFemaleActor, debugtext="Insertion Over The Top")
+					PlaySound("InsertionAnalExcited", mainFemaleActor, debugtext="Insertion Over The Top", extraFacts = "theirs")
 				else
-					PlaySound("SurprisedByMaleOrgasm", mainFemaleActor, soundPriority = 3 , debugtext ="SurprisedByMaleOrgasm")
+					PlaySound("SurprisedByMaleOrgasm", mainFemaleActor, soundPriority = 3 , debugtext ="SurprisedByMaleOrgasm", extraFacts = "theirs")
 				endif
 			EndIf
 		endif
@@ -626,18 +626,21 @@ Event IVDTOnOrgasm(Form actorRef, Int thread)
 		if !IsUnconcious()
 			if CurrentPenetrationLvl() == 1
 				printdebug("Playing MaleOrgasmOral sound")
+				;HER climax, voiced over an oral act - "mine". (The identical calls in the
+				;partner-orgasm branch above are his, and stay "theirs".) The direction is
+				;asked for rather than assumed: this branch covers being sucked too.
 				if VoiceVariation == "B"
 					;Male Orgasmed Inside Mouth
-					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "Male Orgasmed Inside Mouth")
+					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "Male Orgasmed Inside Mouth", extraFacts = "mine", actDir = OralDir(), actPlace = "oral")
 				else
-					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "MaleOrgasmOral")
+					PlaySound("MaleOrgasmOral", mainFemaleActor, soundPriority = 3 , debugtext= "MaleOrgasmOral", extraFacts = "mine", actDir = OralDir(), actPlace = "oral")
 				endif
 			elseif moanonly == 1
 				printdebug("Playing simple 'Oh' for female orgasm.")
-				PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "Oh")
+				PlaySound("Oh", mainFemaleActor, soundPriority = 3 , debugtext= "Oh", extraFacts = "mine")
 			else
 				printdebug("Playing FemaleOrgasm sound.")
-				PlaySound("Orgasm", mainFemaleActor, soundPriority = 3, debugtext ="FemaleOrgasm")
+				PlaySound("Orgasm", mainFemaleActor, soundPriority = 3, debugtext ="FemaleOrgasm", extraFacts = "mine")
 			endif
 		endif
 
@@ -668,6 +671,15 @@ EndEvent
 
 Event OnUpdate()
 	printdebug(" Updating")
+
+	;hold the whole cycle while a menu has the scene frozen (see GamePaused): the
+	;line already playing rings out - cutting a moan mid-word is worse than letting
+	;it finish - but nothing new starts until the menu closes, so the voice stops
+	;walking ahead of an animation that isn't moving.
+	if GamePaused()
+		RegisterForSingleUpdate(0.5)
+		return
+	endif
 
 	if Masterscript.AnimationisEnding()
 		ASLEndScene()
@@ -884,7 +896,283 @@ Int Function GetActorEnjoyment(Actor actorInQuestion)
 	EndIf
 EndFunction
 
-Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 0, Bool waitForCompletion = True , string debugtext = "None" , Bool SkipWait = false , Actor voiceActor = None , Bool forceFemaleVoice = false)
+;--- Variation-D fact emission -------------------------------------------------
+;Facts describe the scene from the SPEAKER's perspective and ride along on every
+;voice line (PlaySound -> Director.PlaySound -> AudioUtil.PlayTagged). They are
+;INERT for packs without tagged pools - the untagged floor plays exactly as
+;before - so there is no variation gate and vA/vB packs are unaffected. Tokens
+;come from the [tags] vocabulary in SLO VE's base AudioUtil.toml (see
+;SLOVE Packs\Variation-D-Tagged-Voicepack-Spec.md).
+String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir = "", String actPlace = "")
+	String f = extraFacts
+	;intensity - the scene-wide beat
+	if ASLcurrentlyIntense
+		f += " intense"
+	else
+		f += " soft"
+	endif
+	bool lead = (speaker == mainFemaleActor)
+	;cached once: FemaleIsVictim() calls ASLisBroken() itself, so the mood branches
+	;below would otherwise ask the same externals two or three times per line
+	bool broken = ASLisBroken()
+	bool fVictim = FemaleIsVictim()
+	;mood - the speaker's stance
+	if lead
+		if broken
+			f += " broken"
+		elseif fVictim
+			f += " victim"
+		elseif IsFemdom()
+			f += " dom"
+		else
+			f += " neutral"
+		endif
+	elseif speaker == mainMaleActor && MaleIsVictim()
+		f += " victim"
+	elseif fVictim || broken
+		f += " dom" ;the lead is coerced - her partner runs the scene
+	elseif IsFemdom()
+		f += " sub"
+	else
+		f += " neutral"
+	endif
+	;direction + place + implement, read off the lead-female labels. Those labels
+	;describe the lead and her opposite number (mainMaleActor - which is the
+	;creature in a creature scene) and NOBODY else: a third speaker, e.g. a second
+	;female NPC crying out on her own, gets no act facts at all, because inverting
+	;the lead's direction would state something about her we never measured.
+	String dir = ""
+	String place = ""
+	String imp = ""
+	if !lead && speaker != mainMaleActor
+		;bystander: mood + intensity + partner only
+	elseif actDir != "" || actPlace != ""
+		;the line names its own act. Needed wherever two run at once: in a spitroast
+		;the labels say SVP *and* SBJ, in a DP they name both holes, and one fact per
+		;axis means guessing wrong mutes the pool that was actually right. Authored
+		;from the lead's perspective, like the labels themselves.
+		dir = actDir
+		place = actPlace
+		if dir == "rcv" && place == "oral"
+			imp = LeadImplement() ;someone's mouth is on HER - the implement is hers
+		else
+			imp = PartnerImplement()
+		endif
+	elseif IsGettingDoublePenetrated()
+		;two holes have no single answer - direction only
+		dir = "rcv"
+		imp = PartnerImplement()
+	elseif IsGettingAnallyPenetrated()
+		dir = "rcv"
+		place = "anal"
+		imp = PartnerImplement()
+	elseif IsGettingVaginallyPenetrated()
+		dir = "rcv"
+		place = "vaginal"
+		imp = PartnerImplement()
+	elseif IsSuckingoffOther()
+		dir = "giv"
+		place = "oral"
+		imp = PartnerImplement()
+	elseif IsCunnilingus() || IsRimming()
+		dir = "giv"
+		place = "oral" ;no implement - her mouth is on nothing that penetrates
+	elseif IsGettingSuckedoff()
+		dir = "rcv"
+		place = "oral"
+		imp = LeadImplement()
+	elseif IsGivingAnalPenetration()
+		dir = "giv"
+		place = "anal"
+		imp = LeadImplement()
+	elseif IsGivingVaginalPenetration()
+		dir = "giv"
+		place = "vaginal"
+		imp = LeadImplement()
+	elseif isTitfuckOthers
+		dir = "giv"
+		place = "chest"
+		imp = PartnerImplement()
+	elseif isHandjobOthers
+		dir = "giv"
+		place = "hand"
+		imp = PartnerImplement()
+	elseif IsFootjobOthers
+		dir = "giv"
+		place = "feet"
+		imp = PartnerImplement()
+	elseif IsGettingStimulated()
+		dir = "rcv"
+	endif
+	if dir != ""
+		;a partner line inverts the direction: her rcv is his giv
+		if !lead
+			if dir == "rcv"
+				dir = "giv"
+			else
+				dir = "rcv"
+			endif
+		endif
+		f += " " + dir
+	endif
+	if place != ""
+		f += " " + place
+	endif
+	if imp != ""
+		f += " " + imp
+	endif
+	;partner - who is on the other side of the SPEAKER's line: the lead's opposite
+	;number for her lines, the lead herself for everyone else's. Same function both
+	;ways, so a futa lead reads as "futa" from either side instead of "man" to him
+	;and "futa" to herself.
+	if lead
+		f += PartnerFacts(mainMaleActor)
+	else
+		f += PartnerFacts(mainFemaleActor)
+	endif
+	return f
+EndFunction
+
+;partner-axis fact for the actor on the other side of a line: " man", " woman",
+;" futa", " creature canine", or "" when there is no partner. ANATOMY ONLY - the
+;implement is a property of the act (LeadImplement / PartnerImplement), not of
+;whoever happens to be standing there: a male partner being licked contributes
+;no "cock" fact.
+String Function PartnerFacts(Actor partner)
+	if partner == None
+		return ""
+	endif
+	if Sexlab.GetGender(partner) > 1
+		String bk = BeastkindFor(partner)
+		if bk != ""
+			return " creature " + bk
+		endif
+		return " creature"
+	elseif MasterScript.IsMale(partner)
+		return " man"
+	elseif hasSchlong(partner)
+		return " futa"
+	endif
+	return " woman"
+EndFunction
+
+;True for anyone with a penis of their own: a male, a MALE creature, or a
+;schlonged futa. SexLab genders run 0 male / 1 female / 2 male creature /
+;3 female creature, so the even ones are the males - a plain "> 1" creature test
+;would hand a female creature a cock. HasSchlong itself rejects creatures.
+Bool Function HasCock(Actor a)
+	if a == None
+		return false
+	endif
+	return (Sexlab.GetGender(a) % 2) == 0 || hasSchlong(a)
+EndFunction
+
+;direction of the current oral act: she gives when her mouth is on him, receives
+;when someone is on her. The cum-in-mouth lines know their PLACE for certain even
+;in a spitroast, but not their direction - CurrentPenetrationLvl() == 1 covers
+;both IsSuckingoffOther() and IsGettingSuckedoff().
+String Function OralDir()
+	if IsSuckingoffOther()
+		return "giv"
+	endif
+	return "rcv"
+EndFunction
+
+;implement when the LEAD is the one penetrating: her own if she has one,
+;otherwise she is wearing it.
+String Function LeadImplement()
+	if hasSchlong(mainFemaleActor)
+		return "cock"
+	endif
+	return "strapon"
+EndFunction
+
+;implement when the act runs on the PARTNER's anatomy; "" when he hasn't got one
+;(a female partner in a cunnilingus or tribbing scene).
+String Function PartnerImplement()
+	if mainMaleActor == None
+		return ""
+	elseif HasCock(mainMaleActor)
+		return "cock"
+	endif
+	return "strapon"
+EndFunction
+;per-actor beastkind cache (see BeastkindFor)
+Actor cachedBeastkindActor
+String cachedBeastkind
+
+String Function CacheBeastkind(Actor a, String kind)
+	cachedBeastkindActor = a
+	cachedBeastkind = kind
+	return kind
+EndFunction
+
+;coarse beast family from the race display name (the codebase's established
+;race-matching pattern, cf. IshugePP). "" = no family fact (bare creature).
+;Order matters: Werewolf before Wolf, Dragon Priest (undead) before Dragon.
+String Function BeastkindFor(Actor a)
+	;the race cannot change mid-scene, and the walk below is up to 26 StringUtil
+	;externals - cache it per actor rather than paying that on every voice line
+	if a == cachedBeastkindActor
+		return cachedBeastkind
+	endif
+	String r = a.GetRace().GetName()
+	if StringUtil.Find(r, "Werewolf") > -1 || StringUtil.Find(r, "Werebear") > -1
+		return CacheBeastkind(a, "werebeast")
+	elseif StringUtil.Find(r, "Draugr") > -1 || StringUtil.Find(r, "Skeleton") > -1 || StringUtil.Find(r, "Priest") > -1
+		return CacheBeastkind(a, "undead")
+	elseif StringUtil.Find(r, "Dragon") > -1
+		return CacheBeastkind(a, "dragon")
+	elseif StringUtil.Find(r, "Wolf") > -1 || StringUtil.Find(r, "Dog") > -1 || StringUtil.Find(r, "Hound") > -1 || StringUtil.Find(r, "Fox") > -1
+		return CacheBeastkind(a, "canine")
+	elseif StringUtil.Find(r, "Sabre") > -1 || StringUtil.Find(r, "Cat") > -1
+		return CacheBeastkind(a, "feline")
+	elseif StringUtil.Find(r, "Horse") > -1
+		return CacheBeastkind(a, "equine")
+	elseif StringUtil.Find(r, "Troll") > -1
+		return CacheBeastkind(a, "troll")
+	elseif StringUtil.Find(r, "Giant") > -1
+		return CacheBeastkind(a, "giant")
+	elseif StringUtil.Find(r, "Falmer") > -1
+		return CacheBeastkind(a, "falmer")
+	elseif StringUtil.Find(r, "Riekling") > -1
+		return CacheBeastkind(a, "riekling")
+	elseif StringUtil.Find(r, "Dwarven") > -1 || StringUtil.Find(r, "Centurion") > -1
+		return CacheBeastkind(a, "automaton") ;before Spider: a Dwarven Spider is a machine
+	elseif StringUtil.Find(r, "Spider") > -1
+		return CacheBeastkind(a, "spider")
+	elseif StringUtil.Find(r, "Chaurus") > -1
+		return CacheBeastkind(a, "chaurus")
+	elseif StringUtil.Find(r, "Dremora") > -1 || StringUtil.Find(r, "Atronach") > -1 || StringUtil.Find(r, "Lurker") > -1 || StringUtil.Find(r, "Seeker") > -1 || StringUtil.Find(r, "Daedroth") > -1
+		return CacheBeastkind(a, "daedra")
+	endif
+	return CacheBeastkind(a, "")
+EndFunction
+
+
+;--------------------------- menu freeze ------------------------------------
+;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet
+int audioUtilPauseAPI
+
+;True while a menu has the scene frozen. SKSE Menu Framework (and other ImGui
+;overlay menus) freeze the game by setting Main::freezeTime WITHOUT entering
+;menu mode, so the Papyrus VM keeps ticking right through it: Utility.Wait,
+;RegisterForSingleUpdate and even Utility.IsInMenuMode() all see a running game,
+;and this engine walked on to the next line over a frozen animation. AudioUtil
+;reads the freeze flag natively (API v7) and also reports real menu-mode pauses.
+;Older AudioUtil: probed once, then this is always false = the previous behavior.
+bool Function GamePaused()
+	if audioUtilPauseAPI == 0
+		if AudioUtil.GetAPIVersion() >= 7
+			audioUtilPauseAPI = 1
+		else
+			audioUtilPauseAPI = -1
+		endif
+	endif
+	return audioUtilPauseAPI == 1 && AudioUtil.IsGamePaused()
+EndFunction
+
+Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 0, Bool waitForCompletion = True , string debugtext = "None" , Bool SkipWait = false , Actor voiceActor = None , Bool forceFemaleVoice = false , String extraFacts = "" , String actDir = "" , String actPlace = "")
 
 	String soundToPlay = thesound
 
@@ -969,6 +1257,13 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 		Printdebug("Voice line skipped (scene ended / tracker removed) : " + debugtext)
 		Return
 	EndIf
+	;same hold as the OnUpdate gate, for the lines that don't come from it: the
+	;orgasm-reaction threads, the male/female/creature ambience cadences, and any
+	;call whose own wait spanned the menu opening.
+	If GamePaused()
+		Printdebug("Voice line skipped (game frozen behind a menu) : " + debugtext)
+		Return
+	EndIf
 	; male or other playing sound
 	if actorMakingSound != mainFemaleActor && (currentlyPlayingSoundCountMale == 0 || soundpriority > 1) ;others playing sound.
 		Printdebug("Non PC Playing voice : " + debugtext + " (folder " + soundToPlay + ")")
@@ -982,7 +1277,10 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 			if soundPriority > 1
 				partnerGroup = "partner_high"
 			endif
-			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, partnerGroup, voiceChannel)
+			;Variation-D facts for this line, from the audio actor's perspective (see
+			;BuildFacts). Built HERE, past every drop gate: a line the busy counters or
+			;the scene-end check throw away must not pay for a dozen externals first.
+			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, partnerGroup, voiceChannel, BuildFacts(audioActor, extraFacts, actDir, actPlace))
 		endif
 
 		currentlyPlayingSoundCountMale = currentlyPlayingSoundCountMale - 1
@@ -1016,14 +1314,15 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 			AudioUtil.DuckGroup("pc_orgasm")
 		endif
 
-		if !TrackerRemoved ;re-check: the scene may have ended during the pre-delay wait
+		;re-check: the scene may have ended - or a menu frozen it - during the pre-delay wait
+		if !TrackerRemoved && !GamePaused()
 			String pcGroup = "pc_low"
 			if soundPriority >= 3
 				pcGroup = "pc_orgasm"     ;climax cries ride their own volume bus (voice.orgasmvolume)
 			elseif soundPriority > 1
 				pcGroup = "pc_high"
 			endif
-			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, pcGroup, voiceChannel)
+			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, pcGroup, voiceChannel, BuildFacts(audioActor, extraFacts, actDir, actPlace))
 		endif
 
 		currentlyPlayingSoundCount = currentlyPlayingSoundCount - 1
@@ -1091,17 +1390,17 @@ Bool Function PossiblyAskForCumInSpecificLocation()
 
 	if IsGettingDoublePenetrated()
 		if Utility.RandomFloat(0.0, 1.0) < 0.3
-			PlaySound("AskForAnalCum", mainFemaleActor, debugtext = "AskForAnalCum")
+			PlaySound("AskForAnalCum", mainFemaleActor, debugtext = "AskForAnalCum", extraFacts = "theirs", actDir = "rcv", actPlace = "anal")
 		else
-			PlaySound("AskForVaginalCum", mainFemaleActor, debugtext = "AskForVaginalCum")
+			PlaySound("AskForVaginalCum", mainFemaleActor, debugtext = "AskForVaginalCum", extraFacts = "theirs", actDir = "rcv", actPlace = "vaginal")
 		endif
 	elseif IsGettingVaginallyPenetrated()
-		PlaySound("AskForVaginalCum", mainFemaleActor, debugtext = "AskForVaginalCum")
+		PlaySound("AskForVaginalCum", mainFemaleActor, debugtext = "AskForVaginalCum", extraFacts = "theirs", actDir = "rcv", actPlace = "vaginal")
 	elseif IsGettingAnallyPenetrated()
-		PlaySound("AskForAnalCum", mainFemaleActor, debugtext = "AskForAnalCum")
+		PlaySound("AskForAnalCum", mainFemaleActor, debugtext = "AskForAnalCum", extraFacts = "theirs", actDir = "rcv", actPlace = "anal")
 
 	elseif IsSuckingoffOther()
-		PlaySound("AskForOralCum", mainFemaleActor, debugtext = "AskForOralCum")
+		PlaySound("AskForOralCum", mainFemaleActor, debugtext = "AskForOralCum", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
 	endif
 
 	return false
@@ -1109,16 +1408,18 @@ EndFunction
 
 Function PossiblyRemarkOnCumLocation()
 	;Go ahead with remark
+	;the location was snapshotted at his orgasm; the labels have moved on since,
+	;so the direction is stated by the remark itself rather than re-derived
 	If locationOfLastPartnerOrgasm == 1
-		PlaySound("CameInMouth", mainFemaleActor, debugtext = "CameInMouth")
+		PlaySound("CameInMouth", mainFemaleActor, debugtext = "CameInMouth", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
 		Utility.Wait(Utility.RandomFloat(0.75, 1.75))
 
 	ElseIf locationOfLastPartnerOrgasm == 2
-		PlaySound("CameInPussy", mainFemaleActor, debugtext = "CameInPussy")
+		PlaySound("CameInPussy", mainFemaleActor, debugtext = "CameInPussy", extraFacts = "theirs", actDir = "rcv", actPlace = "vaginal")
 		Utility.Wait(Utility.RandomFloat(0.75, 1.75))
 
 	ElseIf locationOfLastPartnerOrgasm == 3
-		PlaySound("CameInAss", mainFemaleActor, debugtext = "CameInAss")
+		PlaySound("CameInAss", mainFemaleActor, debugtext = "CameInAss", extraFacts = "theirs", actDir = "rcv", actPlace = "anal")
 		Utility.Wait(Utility.RandomFloat(0.75, 1.75))
 
 	EndIf
@@ -1126,19 +1427,21 @@ EndFunction
 
 Function PossiblyRemarkOnCumLocationVarB()
 	;Go ahead with remark
+	;the location was snapshotted at his orgasm; the labels have moved on since,
+	;so the direction is stated by the remark itself rather than re-derived
 	If locationOfLastPartnerOrgasm == 1
 		;Ending Orgasmed Inside Mouth
-		PlaySound("CameInMouth", mainFemaleActor, debugtext = "Ending Orgasmed Inside Mouth")
+		PlaySound("CameInMouth", mainFemaleActor, debugtext = "Ending Orgasmed Inside Mouth", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
 		Utility.Wait(Utility.RandomFloat(0.75, 1.75))
 
 	ElseIf locationOfLastPartnerOrgasm == 2
 		;Ending Orgasmed Inside Pussy
-		PlaySound("CameInPussy", mainFemaleActor, debugtext = "Ending Orgasmed Inside Pussy")
+		PlaySound("CameInPussy", mainFemaleActor, debugtext = "Ending Orgasmed Inside Pussy", extraFacts = "theirs", actDir = "rcv", actPlace = "vaginal")
 		Utility.Wait(Utility.RandomFloat(0.75, 1.75))
 
 	ElseIf locationOfLastPartnerOrgasm == 3
 		;Ending Orgasmed Inside Ass
-		PlaySound("CameInAss", mainFemaleActor, debugtext = "Ending Orgasmed Inside Ass")
+		PlaySound("CameInAss", mainFemaleActor, debugtext = "Ending Orgasmed Inside Ass", extraFacts = "theirs", actDir = "rcv", actPlace = "anal")
 		Utility.Wait(Utility.RandomFloat(0.75, 1.75))
 
 	EndIf

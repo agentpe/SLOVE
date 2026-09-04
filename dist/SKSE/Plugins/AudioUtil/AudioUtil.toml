@@ -51,6 +51,14 @@ fuz_slots = 24
 # play by decoding the slot fuz ahead of time. Cheap once cached. (Ad-hoc folders
 # outside the configured slots aren't prewarmed - use `autest warmfolder <dir>`.)
 prewarm_fuz = true
+# Voices hold while a menu has the scene frozen. ImGui overlay menus (SKSE Menu
+# Framework and friends) freeze the animation WITHOUT entering menu mode, so Papyrus
+# keeps running and the voice engine used to walk on to the next line over a stopped
+# scene; SLO VE polls AudioUtil.IsGamePaused() each cycle to hold instead (the line
+# already playing rings out). `tfc 1` sets the same freeze flag - plain `tfc` does
+# not - so set this false if you would rather keep the moans going while a scene is
+# frozen for screenshots. false = only real menu-mode pauses hold the voice.
+pause_on_freeze_time = true
 default_female_slot = "F0"    # unrouted female NPCs speak the stock moans
 default_male_slot = "M0"      # ...and unrouted male NPCs the stock male moans (the M mirror
                               # of F0).
@@ -149,3 +157,26 @@ keywords = [
   'SLOVE.esp|081F',          # SLOVE_TongueKeyword (on all SLOVE_Tongue*Armor)
   'SL Survival.esp|0B74B5',  # _SLS_TongueKeyword (SLS tongue/deepthroat device)
 ]
+
+[tags]
+# Variation-D tag vocabulary (see SLOVE Packs\Variation-D-Tagged-Voicepack-Spec.md).
+# AudioUtil ships NO vocabulary - this section IS the token contract that SLO VE's
+# fact emission and every tagged voice pack share. [tags] is additive across config
+# files (same-named axes union tokens, weight last-writer-wins), so other mods'
+# vocabularies coexist; packs must NOT redefine SLO VE's axes - only the mod
+# emitting the facts extends them. One fact per axis; weights make tone outrank
+# anatomy. Axes:
+mood      = { tokens = ["dom", "sub", "neutral", "victim", "broken"], weight = 16 }
+# whose orgasm the line reacts to. Its OWN axis, not part of direction: a line is
+# routinely both ("rcv anal theirs"), and two tokens of one axis can never qualify.
+climax    = { tokens = ["mine", "theirs"], weight = 8 }
+intensity = { tokens = ["soft", "intense"], weight = 8 }
+# giv/rcv = who acts on whom, from the speaker's perspective
+direction = { tokens = ["giv", "rcv"], weight = 4 }
+# body venue of the act
+place     = { tokens = ["anal", "vaginal", "oral", "chest", "hand", "feet"], weight = 2 }
+# what does the penetrating: the lead's own, or the one she is wearing
+implement = { tokens = ["cock", "strapon"], weight = 1 }
+partner   = { tokens = ["man", "woman", "futa", "creature"], weight = 1 }
+# refines a "creature" partner by beast family; deliberately coarse (spec 4)
+beastkind = { tokens = ["canine", "feline", "equine", "troll", "giant", "falmer", "riekling", "undead", "spider", "chaurus", "dragon", "daedra", "automaton", "werebeast"], weight = 1 }

@@ -169,7 +169,11 @@ Event NpcSceneOrgasm(Form actorRef, Int thread)
 	if SexLab.GetGender(a) == 0 && enablemalevoice != 1
 		return
 	endif
-	MasterScript.PlaySound("Orgasm", a, False, "npc_high", "slove_np" + a.GetFormID())
+	;same hold as OnUpdate - this one is event-driven, so it needs its own gate
+	if GamePaused()
+		return
+	endif
+	MasterScript.PlaySound("Orgasm", a, False, "npc_high", "slove_np" + a.GetFormID(), SceneFacts(SceneIsIntense(), "mine"))
 EndEvent
 
 Event OnUpdate()
@@ -178,7 +182,10 @@ Event OnUpdate()
 		RemoveSelf()
 		return
 	endif
-	if enablevoice == 1
+	;same hold as the PC engine's OnUpdate: a menu that freezes the scene must not
+	;let ambient voice keep walking over an animation that isn't moving. Lines
+	;already playing ring out; nothing new starts until the menu closes.
+	if enablevoice == 1 && !GamePaused()
 		bool intense = SceneIsIntense()
 		PlayMaleMoaning(intense)
 		PlayFemaleNPCComments(intense)
@@ -186,6 +193,19 @@ Event OnUpdate()
 	endif
 	RegisterForSingleUpdate(1.0)
 EndEvent
+
+;Variation-D facts for an NPC-scene line. Only what an NPC scene actually knows:
+;the ambient intensity beat, plus "mine" on a climax cry. Deliberately no mood or
+;direction - this engine has no victim/femdom model and no per-actor act labels,
+;and a fact it cannot stand behind would route the line into a pool that means
+;something else. Facts it omits simply leave those pools unqualified, so a tagged
+;pack falls back to its untagged floor exactly as before.
+String Function SceneFacts(bool intense, String extraFacts = "")
+	if intense
+		return extraFacts + " intense"
+	endif
+	return extraFacts + " soft"
+EndFunction
 
 ; Coarse intensity for ambient cadence: the anchor (position 0 receiver) crossing the
 ; SexLab enjoyment hype threshold. No physics overlay - that is the PC engine's job;
@@ -255,7 +275,7 @@ Function PlayCreatureBreathing(bool intense)
 		maxPause = maxPause / 2.0
 	endif
 	creatureBreathCooldown = Utility.RandomFloat(minPause, maxPause)
-	MasterScript.PlaySound("Breathing", c, False, "npc_low", "slove_np" + c.GetFormID())
+	MasterScript.PlaySound("Breathing", c, False, "npc_low", "slove_np" + c.GetFormID(), SceneFacts(intense))
 EndFunction
 
 ; Route a human ambient line through the Director's PlaySound (partner group + own
@@ -267,7 +287,27 @@ Function PlayAmbient(Actor a, bool intense)
 	if intense
 		cat = "NearOrgasmNoises"
 	endif
-	MasterScript.PlaySound(cat, a, False, "npc_low", "slove_np" + a.GetFormID())
+	MasterScript.PlaySound(cat, a, False, "npc_low", "slove_np" + a.GetFormID(), SceneFacts(intense))
+EndFunction
+
+;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet
+int audioUtilPauseAPI
+
+;True while a menu has the scene frozen. SKSE Menu Framework and other ImGui
+;overlays freeze the game WITHOUT entering menu mode, so the Papyrus VM keeps
+;ticking and Utility.IsInMenuMode() sees a running game; AudioUtil reads the
+;engine's freeze flag natively (API v7). Older AudioUtil: always false = the
+;previous behavior. Cached per instance - this is a magic-effect script, rebuilt
+;for every scene, so the probe is never carried across an AudioUtil upgrade.
+bool Function GamePaused()
+	if audioUtilPauseAPI == 0
+		if AudioUtil.GetAPIVersion() >= 7
+			audioUtilPauseAPI = 1
+		else
+			audioUtilPauseAPI = -1
+		endif
+	endif
+	return audioUtilPauseAPI == 1 && AudioUtil.IsGamePaused()
 EndFunction
 
 Function RemoveSelf()

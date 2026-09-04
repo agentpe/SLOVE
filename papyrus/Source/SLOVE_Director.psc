@@ -175,6 +175,10 @@ EndFunction
 Function Maintenance()
 
 	SLOVE_Log.InitLog()  ; open the SLOVE user log (OnInit + every reload)
+	;re-probe AudioUtil's API on every load: this script is a ReferenceAlias, so a
+	;cached probe is SAVED, and a player who upgrades AudioUtil mid-save would
+	;otherwise keep the untagged fallback forever with nothing in the log to say so
+	audioUtilTagAPI = 0
 	PerformInitialization()
 	;Other Parameters
 	InitializeDirectorConfigs()
@@ -1064,7 +1068,10 @@ Function RegisterThatSceneIsEnding(Bool maleOnlyScene)
 	;SLO VE: no-op kept for consumer-port compatibility (original body was already disabled)
 EndFunction
 
-Function PlaySound(String theSound, Actor actorMakingSound, Bool waitForCompletion = True, String group = "", String channel = "")
+;0 = not probed yet, 1 = AudioUtil supports tagged playback, -1 = it predates it
+int audioUtilTagAPI
+
+Function PlaySound(String theSound, Actor actorMakingSound, Bool waitForCompletion = True, String group = "", String channel = "", String facts = "")
 	;theSound is a AudioUtil category name; slot is resolved from the actor by the DLL.
 	;blockLipSync per line when a face (SLS ahegao or our own climax face) owns the
 	;actor's mouth, so the moan can't flap the jaw over it. Decided per call - there
@@ -1078,11 +1085,33 @@ Function PlaySound(String theSound, Actor actorMakingSound, Bool waitForCompleti
 	if enableprintdebug == 1
 		string slot = AudioUtil.GetSlotForActor(actorMakingSound)
 		int files = AudioUtil.GetCategoryFileCount(slot, theSound)
-		string line = "Play '" + theSound + "' actor=" + actorMakingSound.GetDisplayName() + " slot=" + slot + " files=" + files + " group=" + group + " chan=" + channel
+		string line = "Play '" + theSound + "' actor=" + actorMakingSound.GetDisplayName() + " slot=" + slot + " files=" + files + " group=" + group + " chan=" + channel + " facts=[" + facts + "]"
 		printdebug(line)
 		SLOVE_Log.WriteLog("Voice : " + line, 0)
 	endif
-	AudioUtil.Play(theSound, actorMakingSound, waitForCompletion, 1.0, group, channel, FaceOwnsMouth(actorMakingSound))
+	;PlayTagged with empty facts is byte-for-byte AudioUtil.Play, so every line
+	;routes through the tagged path unconditionally - no per-variation branch.
+	;The facts only engage tagged pools a Variation-D pack actually ships.
+	;PlayTagged and its PlayVoiceTagged native arrived in AudioUtil 0.9.17 (API v6).
+	;On an older AudioUtil the call cannot bind and EVERY voice line dies with it -
+	;a silent engine on an install that is otherwise fine - so probe the version
+	;once and fall back to the untagged Play, which is what PlayTagged reduces to
+	;with empty facts anyway. Papyrus resolves global calls lazily, so the tagged
+	;branch is never touched on an install that cannot supply it.
+	bool mouthOwned = FaceOwnsMouth(actorMakingSound)
+	if audioUtilTagAPI == 0
+		if AudioUtil.GetAPIVersion() >= 6
+			audioUtilTagAPI = 1
+		else
+			audioUtilTagAPI = -1
+			SLOVE_Log.WriteLog("Voice : AudioUtil API v" + AudioUtil.GetAPIVersion() + " predates tagged playback (v6 / 0.9.17) - Variation-D facts ignored, untagged pools play as before", 0)
+		endif
+	endif
+	if audioUtilTagAPI == 1
+		AudioUtil.PlayTagged(theSound, actorMakingSound, facts, waitForCompletion, 1.0, group, channel, mouthOwned)
+	else
+		AudioUtil.Play(theSound, actorMakingSound, waitForCompletion, 1.0, group, channel, mouthOwned)
+	endif
 EndFunction
 
 ;true while any SLO VE face owns this actor's mouth - the Director's SLS ahegao

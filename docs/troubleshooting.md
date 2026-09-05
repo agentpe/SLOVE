@@ -55,7 +55,7 @@ SLOVE_Config Reload                        ; re-read SLOVE.toml
 au reload                     ; re-read the AudioUtil TOMLs and rescan folders
 ```
 
-Every `SLOVE_Test` / `SLOVE_Config` command also has a short alias (`slovetest anim`, `slovetest dump`, `slovetest audit F1`, `slovetest sample F1 Orgasm`, `slovetest milk`, `sloveconfig reload`); lipsync has its own `slovelip enable 0` / `slovelip gain 0.8`.
+Every `SLOVE_Test` / `SLOVE_Config` command also has a short alias (`slovetest anim`, `slovetest dump`, `slovetest audit F1`, `slovetest sample F1 Orgasm`, `slovetest facefix`, `slovetest milk`, `sloveconfig reload`); lipsync has its own `slovelip enable 0` / `slovelip gain 0.8`.
 
 `DumpAnim` (alias `slovetest anim`) is the fastest way to see *why a given animation sounds the way it does*. For the player's live scene it prints the active SexLab scene tags, the SFX tag, and — per actor, the player marked `*` — their sex, role, resolved AudioUtil slot, all five labels (`stim`/`penis`/`oral`/`pen`/`end`) and the voice branch those labels select. Every line goes to **both the console and `SLOVE.0.log`**, so you can run it mid-scene and read it back afterwards. The voice line is the *label-derived* branch (the live engine also applies gag/orgasm/timing overrides), so pair it with `SampleCategory` to confirm a folder actually resolves.
 
@@ -153,6 +153,39 @@ If those lines look healthy and you still hear nothing, work the console command
 - Check `director.enableexpressions` plus the per-class gates (`enablepcexpression`, `enablemalenpcexpression`, `enablefemalenpcexpression`).
 - Creatures without facegen are skipped.
 - A mask covering the face is detected and respected (`Masks.json`).
+
+## Faces stuck open, deformed, or a tongue through a closed mouth
+
+A face that stays disfigured after a scene — a mouth that won't close, teeth pushing
+through the lips, a tongue poking out of a closed chin — is stuck facial **state**, not a
+broken mesh.
+
+**Quick repair:** `slovetest facefix` (needs ConsoleUtil Extended). It stops lipsync,
+resets MFG/MFEE and removes any leftover tongue armor, for the player and the actor under
+the crosshair — aim at the NPC before opening the console. A save + load also clears stuck
+phonemes, but **not** a still-worn tongue armor.
+
+Causes, most common first:
+
+1. **Mfg Fix NG missing, outdated, or losing its file conflicts.** Every SLO VE face
+   write *and* the scene-end reset go through it. The nastiest case is the **old
+   (non-NG) Mfg Fix**: mouths still move (AudioUtil's lipsync is native), but faces are
+   never driven or reset, so every scene leaves residue. SLO VE probes this on every
+   game load — look for the `Mfg Fix NG` line in `SLOVE.0.log`, and a one-time console
+   warning at the first scene.
+2. **SexLab's own facial expressions still enabled.** SLO VE drives the face itself;
+   both together stack and deform (see
+   [Doubled voices](#doubled-voices-or-the-mouth-twitching-between-two-expressions)).
+   Disable facial expressions in the SexLab MCM.
+3. **A leftover tongue armor.** Check the actor's inventory for a "Tongue" item
+   (console: click them, `showinventory`). NPC-only scenes used to leak the tongue into
+   NPC inventories, where the outfit AI would re-equip it later with a closed mouth —
+   fixed in 0.6.12; on any version `slovetest facefix` removes it.
+4. **Another face/ahegao mod owns the same channels.** SexLab Survival's ahegao is
+   *meant* to persist past the scene end (SLS clears it itself, on its own schedule).
+   For mods that signal ahegao by a worn item or a StorageUtil key there are yields —
+   [`ahegaoitems` / `ahegaostoragekeys`](config/slove.md#expressions) — but two writers
+   with no yield between them will fight and deform.
 
 ## SFX are wrong or missing
 

@@ -69,6 +69,10 @@ subs:
         type: int
         default: 0
         help: 1 = if the wav has no sidecar, write a test one next to it and replay (file stays on disk)
+  - name: FaceFix
+    alias: facefix
+    func: FaceFix
+    help: Reset a stuck/deformed face - stops lipsync, strips tongue armors, resets MFG/MFEE (player + crosshair actor)
   - name: Milk
     alias: milk
     func: Milk

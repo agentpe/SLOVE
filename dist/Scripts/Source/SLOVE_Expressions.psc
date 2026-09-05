@@ -846,9 +846,13 @@ Function InitializeConfigandForms()
 	IsPlayer = actorref == playerref
 	Gender = sexlab.GetGender(ActorRef)
 
-	;seed the SLS ahegao state in case it's already active when this instance starts
+	;seed the SLS ahegao state in case it's already active when this instance starts.
+	;Gated on SL Survival actually being loaded: the _SLS_IsAhegaoing StorageUtil key
+	;lives in the co-save and outlives an SLS uninstall (or a crash mid-ahegao) - a
+	;stale 1 would pause expressions AND make resetexpressions() skip the scene-end
+	;face reset on every scene from then on (permanently stuck faces)
 	if IsPlayer
-		SLSAhegaoActive = StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0) == 1
+		SLSAhegaoActive = Game.GetModByName("SL Survival.esp") != 255 && StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0) == 1
 	endif
 
 	if IsPlayer
@@ -1109,6 +1113,27 @@ Function CleanupTongueItem()
 	StorageUtil.SetIntValue(actorref, "SLOVE_TongueEquipped", 0)
 	if FHUTongueTypeArmor && actorref.IsEquipped(FHUTongueTypeArmor)
 		actorref.UnequipItem(FHUTongueTypeArmor, false, true) ;armors are Playable now - plain unequip works on the player too
+	endif
+	;NPC-ONLY scenes never reach the Director's RemoveTongueItems sweep
+	;(DirectorEndScene is the player-scene path), so the tongue auto-added by
+	;EquipItem stayed in the NPC's inventory - and the outfit AI re-equips a
+	;loose PLAYABLE armor at its next redress/reload: a tongue through a closed
+	;chin, surviving save/load. Strip every variant here for non-player actors;
+	;the player's pre-add stays the Director's job (and Director scenes just
+	;find nothing left to remove for partners)
+	if actorref != Game.GetPlayer()
+		int ti = 0
+		while ti < 10
+			;SLOVE_Tongue{ti+1}Armor = 0x000813 + ti (same ids as RemoveTongueItems)
+			Form tongueItem = Game.GetFormFromFile(0x000813 + ti, "SLOVE.esp")
+			if tongueItem
+				int tcnt = actorref.GetItemCount(tongueItem)
+				if tcnt > 0
+					actorref.RemoveItem(tongueItem, tcnt, abSilent = true)
+				endif
+			endif
+			ti += 1
+		endwhile
 	endif
 	SetSexLabForceOpenMouth(actorref, false) ;release the hold at scene end
 	HoldMouthOpenTick = false

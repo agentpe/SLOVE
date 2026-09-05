@@ -806,9 +806,13 @@ Function InitializeConfigandForms()
 	IsPlayer = actorref == playerref
 	Gender = sexlab.GetGender(ActorRef)
 
-	;seed the SLS ahegao state in case it's already active when this instance starts
+	;seed the SLS ahegao state in case it's already active when this instance starts.
+	;Gated on SL Survival actually being loaded: the _SLS_IsAhegaoing StorageUtil key
+	;lives in the co-save and outlives an SLS uninstall (or a crash mid-ahegao) - a
+	;stale 1 would pause expressions AND make resetexpressions() skip the scene-end
+	;face reset on every scene from then on (permanently stuck faces)
 	if IsPlayer
-		SLSAhegaoActive = StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0) == 1
+		SLSAhegaoActive = Game.GetModByName("SL Survival.esp") != 255 && StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0) == 1
 	endif
 
 	if IsPlayer
@@ -997,6 +1001,26 @@ Function CleanupTongueItem()
 	FHUTongueShown = false
 	if FHUTongueTypeArmor && actorref.IsEquipped(FHUTongueTypeArmor)
 		actorref.UnequipItemEx(FHUTongueTypeArmor, 0, false) ;Ex mirrors the NonPlayable-safe equip, uniform for everyone
+	endif
+	;NPC-ONLY scenes never reach the Director's RemoveTongueItems sweep
+	;(DirectorEndScene is the player-scene path), so the tongue auto-added on
+	;equip stayed in the NPC's inventory forever. Classic tongues are NonPlayable
+	;(the outfit AI won't self-equip them, unlike the P+ build), but the leaked
+	;item still accumulates per NPC - strip every variant here for non-player
+	;actors; the player's pre-add stays the Director's job
+	if actorref != Game.GetPlayer()
+		int ti = 0
+		while ti < 10
+			;SLOVE_Tongue{ti+1}Armor = 0x000813 + ti (same ids as RemoveTongueItems)
+			Form tongueItem = Game.GetFormFromFile(0x000813 + ti, "SLOVE.esp")
+			if tongueItem
+				int tcnt = actorref.GetItemCount(tongueItem)
+				if tcnt > 0
+					actorref.RemoveItem(tongueItem, tcnt, abSilent = true)
+				endif
+			endif
+			ti += 1
+		endwhile
 	endif
 endfunction
 

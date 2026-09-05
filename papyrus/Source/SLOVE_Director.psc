@@ -233,8 +233,20 @@ Function Maintenance()
 
 	;re-seed the face-owns-mouth marker from SLS's saved ahegao state so a save
 	;made mid-ahegao keeps PC moans off the mouth after the reload (PlaySound
-	;reads this marker per line; nothing is latched in the DLL)
-	StorageUtil.SetIntValue(playerref, "SLOVE_FaceOwnsMouth_SLS", StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0))
+	;reads this marker per line; nothing is latched in the DLL).
+	;Gated on SL Survival being loaded: _SLS_IsAhegaoing lives in the co-save and
+	;outlives an SLS uninstall - honoring a stale 1 would permanently block the
+	;player's lipsync. Without SLS any stale marker is cleared instead.
+	if Game.GetModByName("SL Survival.esp") != 255
+		StorageUtil.SetIntValue(playerref, "SLOVE_FaceOwnsMouth_SLS", StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0))
+	else
+		StorageUtil.UnsetIntValue(playerref, "SLOVE_FaceOwnsMouth_SLS")
+	endif
+
+	;fire the Mfg Fix NG round-trip probe in its own event stack (see
+	;OnSLOVEMfgFixProbe) - the flag is pre-cleared so a repaired install stops warning
+	StorageUtil.SetIntValue(None, "SLOVE_MfgFixBroken", 0)
+	SendModEvent("SLOVE_MfgFixProbe")
 
 	;enjoyment-game block net: a crash/quit while the broken-PC block was live
 	;leaves the P+ settings flipped (and P+ saves them to disk on every game
@@ -306,12 +318,41 @@ Function RegisterForTheEventsWeNeed()
 	;pauses its own writes, but AudioUtil's lipsync would still drive (and then
 	;zero) the mouth phonemes on every PC moan - block it for the duration.
 	RegisterForModEvent("_SLS_AhegaoStateChange", "DirectorOnSLSAhegaoStateChange")
+	;self-event: the Mfg Fix probe runs in its own stack so a missing script can
+	;never disturb Maintenance (fired at the end of Maintenance on every load)
+	RegisterForModEvent("SLOVE_MfgFixProbe", "OnSLOVEMfgFixProbe")
 
 EndFunction
 
 Event DirectorOnSLSAhegaoStateChange(string eventName, string argString, float argNum, form sender)
 	;mark the player while SLS owns the face; PlaySound reads this per line
 	StorageUtil.SetIntValue(playerref, "SLOVE_FaceOwnsMouth_SLS", (argNum >= 0.5) as int)
+EndEvent
+
+bool MfgFixConsoleWarned = false ;one console notice per session (log warns every load)
+
+;Mfg Fix NG functional probe: write a phoneme through the exact API every SLO VE
+;face write uses (MfgConsoleFuncExt) and read it back through what the jaw gate
+;reads (MfgConsoleFunc). Catches Mfg Fix NG missing entirely, its DLL failing to
+;load, and the OLD non-NG Mfg Fix - which HAS MfgConsoleFunc but not the Ext
+;script, so mouths still move (lipsync is native) yet faces are never driven or
+;reset: the #1 stuck-face install fault. Runs in its own mod-event stack so a
+;missing script only degrades this probe, never Maintenance. A 3% Aah for under
+;a second is invisible at any camera distance.
+Event OnSLOVEMfgFixProbe(string eventName, string argString, float argNum, form sender)
+	Utility.Wait(1.0) ;let the load settle before touching the face
+	Actor probeActor = Game.GetPlayer()
+	MfgConsoleFuncExt.SetPhoneme(probeActor, 0, 3, 1)
+	Utility.Wait(0.6) ;the Ext write interpolates - give it time to land
+	int readBack = MfgConsoleFunc.GetPhoneme(probeActor, 0)
+	MfgConsoleFuncExt.SetPhoneme(probeActor, 0, 0, 1)
+	if readBack == 0
+		StorageUtil.SetIntValue(None, "SLOVE_MfgFixBroken", 1)
+		SLOVE_Log.WriteLog("Mfg Fix NG is missing or not working: a phoneme written through MfgConsoleFuncExt did not read back. Faces cannot be driven or reset (stuck/deformed faces, tongues through closed lips). Install/update Mfg Fix NG and let it win its file conflicts.", 2)
+	elseif readBack >= 1
+		SLOVE_Log.WriteLog("Mfg Fix NG probe OK (phoneme round-trip = " + readBack + ")", 0)
+	endif
+	;negative readBack = the player's face data is unreadable right now - no verdict
 EndEvent
 
 Function InitializeDirectorConfigs()
@@ -437,6 +478,14 @@ Event DirectorSceneStart(string eventName, string argString, float argNum, form 
 	;SLO VE is for handling player scenes only.
 
 	printdebug("Sexlab Scene Detected")
+
+	;faces are about to be driven - if the load-time Mfg Fix probe failed, say so
+	;where the user is looking, once per session (scene start is safely past the
+	;load path, where console printing is forbidden - see SLOVE_printdebug notes)
+	if !MfgFixConsoleWarned && StorageUtil.GetIntValue(None, "SLOVE_MfgFixBroken", 0) == 1
+		MfgFixConsoleWarned = true
+		MiscUtil.PrintConsole("SLO VE: Mfg Fix NG is missing or not working - faces will stick or deform. Install/update Mfg Fix NG (details in SLOVE.0.log).")
+	endif
 
 	;Route THIS event by its OWN thread. An NPC-only scene is adopted for its ambient
 	;voice / expressions / SFX / resistance even when the player is busy in a DIFFERENT

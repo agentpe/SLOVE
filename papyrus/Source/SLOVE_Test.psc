@@ -219,6 +219,53 @@ Function Milk(Int aiIntense) Global
 	dir.TestMilk(aiIntense != 0)
 EndFunction
 
+;Emergency repair for a stuck/deformed face (mouth won't close, teeth through the
+;lips, tongue through a closed chin): stops lipsync, clears SLO VE's mouth-ownership
+;markers, strips all 10 bundled tongue armors, resets MFG (Mfg Fix NG) and reverts
+;MFEE morphs. Targets the PLAYER plus the actor under the crosshair, if any - aim at
+;an NPC before opening the console to fix them too. Safe to run any time; during a
+;scene the next expression pass simply repaints the face.
+Function FaceFix() Global
+	Actor[] targets = new Actor[2]
+	targets[0] = Game.GetPlayer()
+	targets[1] = Game.GetCurrentCrosshairRef() as Actor
+	int fixed = 0
+	int i = 0
+	while i < targets.length
+		Actor a = targets[i]
+		if a && (i == 0 || a != targets[0])
+			fixed += 1
+			AudioUtil.StopLipSync(a)
+			StorageUtil.SetIntValue(a, "SLOVE_FaceOwnsMouth_Expr", 0)
+			StorageUtil.SetIntValue(a, "SLOVE_FaceOwnsMouth_SLS", 0)
+			StorageUtil.SetIntValue(a, "SLOVE_TongueEquipped", 0)
+			int removed = 0
+			int t = 0
+			while t < 10
+				;SLOVE_Tongue{t+1}Armor = 0x000813 + t (same ids as the Director's RemoveTongueItems)
+				Form tongueItem = Game.GetFormFromFile(0x000813 + t, "SLOVE.esp")
+				if tongueItem
+					int cnt = a.GetItemCount(tongueItem)
+					if cnt > 0
+						a.RemoveItem(tongueItem, cnt, abSilent = true)
+						removed += cnt
+					endif
+				endif
+				t += 1
+			endwhile
+			;both no-op with a log line when the backing mod is absent
+			MfgConsoleFuncExt.resetmfg(a, 0.1)
+			MuFacialExpressionExtended.RevertExpression(a)
+			MiscUtil.PrintConsole("SLOVE facefix: " + a.GetDisplayName() + " - face reset, " + removed + " tongue item(s) removed")
+			SLOVE_Log.WriteLog("facefix: " + a.GetDisplayName() + " - face reset, " + removed + " tongue item(s) removed", 0)
+		endif
+		i += 1
+	endwhile
+	if fixed < 2
+		MiscUtil.PrintConsole("SLOVE facefix: to fix an NPC, aim the crosshair at them before opening the console and rerun.")
+	endif
+EndFunction
+
 ;Print config + resolution basics for quick sanity checks.
 Function DumpState() Global
 	MiscUtil.PrintConsole("SLOVE config available=" + SLOVE_Config.Available())

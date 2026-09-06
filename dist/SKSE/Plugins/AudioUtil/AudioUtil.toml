@@ -178,5 +178,14 @@ place     = { tokens = ["anal", "vaginal", "oral", "chest", "hand", "feet"], wei
 # what does the penetrating: the lead's own, or the one she is wearing
 implement = { tokens = ["cock", "strapon"], weight = 1 }
 partner   = { tokens = ["man", "woman", "futa", "creature"], weight = 1 }
-# refines a "creature" partner by beast family; deliberately coarse (spec 4)
-beastkind = { tokens = ["canine", "feline", "equine", "troll", "giant", "falmer", "riekling", "undead", "spider", "chaurus", "dragon", "daedra", "automaton", "werebeast"], weight = 1 }
+# refines a "creature" partner by beast family; deliberately coarse (spec 4).
+# Weighted 8, not 1, because scoring sums a pool's weights and therefore pits
+# axis GROUPS against each other: an act folder names direction+place+implement
+# (4+2+1 = 7), so at weight 1 a "creature canine" folder scored 2 and could never
+# win a penetrative category - the folder written about the dog always lost to the
+# one that never mentioned it. At 8 a NAMED beast (creature+beastkind = 9) clears
+# the act group, while bare "creature" stays at 1 and still loses, which is right:
+# "it's a beast" is not more specific than the act. partner stays 1 so man/woman/
+# futa scenes are untouched. Strictly additive - a beastkind pool that lost before
+# was indistinguishable from one that did not exist, so nothing regresses.
+beastkind = { tokens = ["canine", "feline", "equine", "troll", "giant", "falmer", "riekling", "undead", "spider", "chaurus", "dragon", "daedra", "automaton", "werebeast"], weight = 8 }

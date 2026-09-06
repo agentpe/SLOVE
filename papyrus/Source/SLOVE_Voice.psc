@@ -992,15 +992,15 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 	elseif isTitfuckOthers
 		dir = "giv"
 		place = "chest"
-		imp = PartnerImplement()
+		imp = PartnerImplement(false) ;nothing penetrates - do not guess a strapon
 	elseif isHandjobOthers
 		dir = "giv"
 		place = "hand"
-		imp = PartnerImplement()
+		imp = PartnerImplement(false)
 	elseif IsFootjobOthers
 		dir = "giv"
 		place = "feet"
-		imp = PartnerImplement()
+		imp = PartnerImplement(false)
 	elseif IsGettingStimulated()
 		dir = "rcv"
 	endif
@@ -1089,11 +1089,23 @@ EndFunction
 
 ;implement when the act runs on the PARTNER's anatomy; "" when he hasn't got one
 ;(a female partner in a cunnilingus or tribbing scene).
-String Function PartnerImplement()
+;
+;a_inferStrapon: mainMaleActor is only "the lead's opposite number", not
+;necessarily male - the fallback in SetUpActors assigns whichever actor is not
+;the lead, so an F/F partner lands here with HasCock() false. In a PENETRATIVE
+;act that safely implies a strapon (something is inside her). In a non-
+;penetrative one - titfuck, handjob, footjob - nothing penetrates and we cannot
+;see whether she is wearing anything, so those callers pass false and we emit no
+;implement fact at all. Absent is the safe degrade: pools that do not constrain
+;on the axis still qualify, where a wrong "strapon" would hand the line to a
+;strapon pool outright.
+String Function PartnerImplement(Bool a_inferStrapon = true)
 	if mainMaleActor == None
 		return ""
 	elseif HasCock(mainMaleActor)
 		return "cock"
+	elseif !a_inferStrapon
+		return ""
 	endif
 	return "strapon"
 EndFunction
@@ -1280,7 +1292,12 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 			;Variation-D facts for this line, from the audio actor's perspective (see
 			;BuildFacts). Built HERE, past every drop gate: a line the busy counters or
 			;the scene-end check throw away must not pay for a dozen externals first.
-			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, partnerGroup, voiceChannel, BuildFacts(audioActor, extraFacts, actDir, actPlace))
+			;Logged alongside the category because a pack author has no other way to see
+			;what a scene actually emitted - guessing the axes from the spec table is how
+			;that table drifted out of step with this function twice.
+			String npcFacts = BuildFacts(audioActor, extraFacts, actDir, actPlace)
+			Printdebug("Non PC voice facts : " + debugtext + " (folder " + soundToPlay + ") [" + npcFacts + "]")
+			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, partnerGroup, voiceChannel, npcFacts)
 		endif
 
 		currentlyPlayingSoundCountMale = currentlyPlayingSoundCountMale - 1
@@ -1322,7 +1339,10 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 			elseif soundPriority > 1
 				pcGroup = "pc_high"
 			endif
-			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, pcGroup, voiceChannel, BuildFacts(audioActor, extraFacts, actDir, actPlace))
+			;see the Non-PC branch above for why the facts are built here and logged
+			String pcFacts = BuildFacts(audioActor, extraFacts, actDir, actPlace)
+			Printdebug("PC voice facts : " + debugtext + " (folder " + soundToPlay + ") [" + pcFacts + "]")
+			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, pcGroup, voiceChannel, pcFacts)
 		endif
 
 		currentlyPlayingSoundCount = currentlyPlayingSoundCount - 1

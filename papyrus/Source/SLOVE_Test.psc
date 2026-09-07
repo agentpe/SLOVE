@@ -29,7 +29,11 @@ Function AuditVoicePack(String slot) Global
 	endif
 	;Variation B is gated on the scene's lead female, so only female slots carry a
 	;B taxonomy. The pass runs only when the slot actually declares variation = "B".
-	bool isVarB = isFemale && AudioUtil.GetSlotVariation(slot) == "B"
+	;"D" is a Variation-B pack that also uses tags - same dispatch, same folder
+	;names (see SLOVE_Voice.DispatchVariation). Checked inline to keep this harness
+	;free of a dependency on the voice script.
+	String slotVar = AudioUtil.GetSlotVariation(slot)
+	bool isVarB = isFemale && (slotVar == "B" || slotVar == "D")
 	if isFemale
 		;For a B pack the A pass is expected to be mostly backfill/MISSING - the
 		;collapsed A names a clean B pack deliberately drops to fallback - so print

@@ -349,7 +349,7 @@ Function FindActorsAndVoices()
 	; Variation-B pack in F1 (e.g. Aika) drives the B dispatch while A packs stay on
 	; the collapsed set. The slot's variation field is the SOLE source of truth - a B
 	; pack must declare variation = "B" on its slot (see the SLOVE_zpack_*.toml overlays).
-	VoiceVariation = AudioUtil.GetSlotVariation(AudioUtil.GetSlotForActor(mainFemaleActor))
+	VoiceVariation = DispatchVariation(AudioUtil.GetSlotVariation(AudioUtil.GetSlotForActor(mainFemaleActor)))
 	printdebug("mainfemaleactor :" + mainFemaleActor.getleveledactorbase().GetName())
 	printdebug("mainfemaleactor Voice Variation:" + VoiceVariation)
 	printdebug("mainmaleactor :" + mainMaleActor.getleveledactorbase().GetName())
@@ -779,6 +779,10 @@ Event OnUpdate()
 			ASLHandlePartnerOrgasmReaction()
 		elseif IsSuckingoffOther() ;blowjob always first because muffled by cock
 			PlayBlowjob()
+		elseif IsGettingSuckedoff() ;same categories as giving, opposite direction.
+			;Must stay next to its mirror: BuildFacts answers oral before the fingering
+			;branches, so moving this below them makes category and facts disagree.
+			PlayBlowjob()
 		elseif IsRimming() && (!ASLcurrentlyintense || !IsgettingPenetrated()) ;Rimjob
 			;rim-tagged scene and the PC's mouth is on the act (RIM/CUN/KIS label) -
 			;same intense+penetrated fall-through rule as the cunnilingus branch
@@ -801,13 +805,20 @@ Event OnUpdate()
 			PlayGettingFucked()
 		elseif IsGivingAnalPenetration() || IsGivingVaginalPenetration() ;fucking others with penis
 			PlayFuckingOthers()
+		elseif IsGettingTitfucked() || IsGettingHandjobbed() || IsGettingFootjobbed()
+			;lead is being stroked / rubbed. Ahead of IsGettingStimulated() to match the
+			;order BuildFacts uses, so category and facts describe the same act.
+			PlayGettingStimulated()
 		elseif IsGettingStimulated() ;Getting Stimulated like fingering but no penetration
 			PlayGettingStimulated()
 		elseif IsStimulatingOthers() ;Stimulating others with finger handjob footjob titfuck
 			PlayStimulatingOthers()
 		elseif IsEnding()
 			PlayEnding()
-		elseif IsLeadIN()
+		else
+			;terminal case: IsLeadIN() requires all five labels at "LDI", so a stage
+			;carrying any label no branch above asks about would otherwise match nothing
+			;and play silence for its whole duration. Costs a generic line instead.
 			PlayLeadIn()
 		endif
 
@@ -1009,6 +1020,23 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 		dir = "giv"
 		place = "vaginal"
 		imp = LeadImplement()
+	;--- receiving side. Order mirrors the dispatch chain: giving penetration
+	;outranks being serviced there, so it must here too, or the folder and the
+	;tags describe different acts. Implement is the lead's own.
+	elseif IsGettingTitfucked()
+		dir = "rcv"
+		place = "chest"
+		imp = LeadImplement()
+	elseif IsGettingHandjobbed()
+		dir = "rcv"
+		place = "hand"
+		imp = LeadImplement()
+	elseif IsGettingFootjobbed()
+		dir = "rcv"
+		place = "feet"
+		imp = LeadImplement()
+	elseif IsGettingStimulated()
+		dir = "rcv"
 	elseif isTitfuckOthers
 		dir = "giv"
 		place = "chest"
@@ -1021,8 +1049,6 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 		dir = "giv"
 		place = "feet"
 		imp = PartnerImplement(false)
-	elseif IsGettingStimulated()
-		dir = "rcv"
 	endif
 	if dir != ""
 		;a partner line inverts the direction: her rcv is his giv
@@ -1261,7 +1287,7 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 	;B-folder audio when HER slot is Variation B - the inner check validates the slot.
 	if (VoiceVariation == "B" || audioActor != playerCharacter) && debugtext != "None" && debugtext != soundToPlay
 		String vbSlot = AudioUtil.GetSlotForActor(audioActor)
-		if vbSlot != "" && AudioUtil.GetSlotVariation(vbSlot) == "B" && AudioUtil.CategoryExists(vbSlot, debugtext)
+		if vbSlot != "" && DispatchVariation(AudioUtil.GetSlotVariation(vbSlot)) == "B" && AudioUtil.CategoryExists(vbSlot, debugtext)
 			soundToPlay = debugtext
 		endif
 	endif
@@ -1312,9 +1338,8 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 			;Variation-D facts for this line, from the audio actor's perspective (see
 			;BuildFacts). Built HERE, past every drop gate: a line the busy counters or
 			;the scene-end check throw away must not pay for a dozen externals first.
-			;Logged alongside the category because a pack author has no other way to see
-			;what a scene actually emitted - guessing the axes from the spec table is how
-			;that table drifted out of step with this function twice.
+			;Logged alongside the category: it is the only way a pack author can see
+			;which axes a given beat actually varies, rather than guessing from docs.
 			String npcFacts = BuildFacts(audioActor, extraFacts, actDir, actPlace)
 			Printdebug("Non PC voice facts : " + debugtext + " (folder " + soundToPlay + ") [" + npcFacts + "]")
 			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, partnerGroup, voiceChannel, npcFacts)
@@ -3277,6 +3302,34 @@ endfunction
 
 Bool Function IsGettingSuckedoff()
 	return PenisActionLabel == "SMF" ||  PenisActionLabel == "FMF"
+endfunction
+
+;A slot marked variation "D" is a Variation-B pack whose author also uses tags:
+;identical folder names, identical dispatch. The marker exists so an author can
+;say "this pack is tag-shaped" and so tooling can tell the two apart - it must
+;never change routing, or every folder in the pack goes unread. Papyrus string
+;comparison is case-insensitive, so "d" works too.
+String Function DispatchVariation(String a_variation)
+	if a_variation == "D"
+		return "B"
+	endif
+	return a_variation
+EndFunction
+
+;--- the RECEIVING side of PenisActionLabel ------------------------------------
+;The lead's own equipment being serviced, as opposed to the IsGiving*/IsSucking*
+;predicates above. Label only: nothing checks that the lead HAS anything, so the
+;implement these produce is LeadImplement() - cock when schlonged, else strapon.
+Bool Function IsGettingHandjobbed()
+	return PenisActionLabel == "SHJ" || PenisActionLabel == "FHJ"
+endfunction
+
+Bool Function IsGettingTitfucked()
+	return PenisActionLabel == "STF" || PenisActionLabel == "FTF"
+endfunction
+
+Bool Function IsGettingFootjobbed()
+	return PenisActionLabel == "SFJ" || PenisActionLabel == "FFJ"
 endfunction
 
 Bool Function IsGettingStimulated()

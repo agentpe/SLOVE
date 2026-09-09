@@ -336,23 +336,45 @@ bool MfgFixConsoleWarned = false ;one console notice per session (log warns ever
 ;reads (MfgConsoleFunc). Catches Mfg Fix NG missing entirely, its DLL failing to
 ;load, and the OLD non-NG Mfg Fix - which HAS MfgConsoleFunc but not the Ext
 ;script, so mouths still move (lipsync is native) yet faces are never driven or
-;reset: the #1 stuck-face install fault. Runs in its own mod-event stack so a
-;missing script only degrades this probe, never Maintenance. A 3% Aah for under
-;a second is invisible at any camera distance.
+;reset. Runs in its own mod-event stack so a missing script only degrades this
+;probe, never Maintenance.
+;NG's GetPhoneme reads the mod-written TARGET bank (phoneme2), so a successful
+;write reads back within a frame - no interpolation wait. What CAN produce a
+;bogus 0 is contention on the player's face: a facegen rebuild right after load
+;(RaceMenu-heavy setups) or another player-mouth mod (DBVO / PC-head-tracking
+;voice systems) writing over the probe channel. Hence: probe phoneme 15 (W -
+;nothing touches it outside a playing line), and require THREE zero reads
+;before declaring the API broken - a dead install fails all three, a stomp or
+;rebuild race passes a retry. (The v1 probe - channel 0, one attempt - false-
+;alarmed on a working install in the field.) A 3% write is invisible.
 Event OnSLOVEMfgFixProbe(string eventName, string argString, float argNum, form sender)
-	Utility.Wait(1.0) ;let the load settle before touching the face
+	Utility.Wait(2.0) ;let the load + post-load facegen rebuilds settle
 	Actor probeActor = Game.GetPlayer()
-	MfgConsoleFuncExt.SetPhoneme(probeActor, 0, 3, 1)
-	Utility.Wait(0.6) ;the Ext write interpolates - give it time to land
-	int readBack = MfgConsoleFunc.GetPhoneme(probeActor, 0)
-	MfgConsoleFuncExt.SetPhoneme(probeActor, 0, 0, 1)
-	if readBack == 0
+	int attempt = 0
+	bool sawZero = false
+	while attempt < 3
+		if attempt > 0
+			Utility.Wait(1.5) ;fresh sample well clear of whatever stomped the last one
+		endif
+		MfgConsoleFuncExt.SetPhoneme(probeActor, 15, 3, 0.1) ;0.1 = near-instant per the API docs
+		Utility.Wait(0.3) ;the write lands via a queued frame task
+		int readBack = MfgConsoleFunc.GetPhoneme(probeActor, 15)
+		;classic 3-arg restore: instant, and its speed-0 path also clears the
+		;smooth-mode flag the Ext write set on the player
+		MfgConsoleFunc.SetPhoneme(probeActor, 15, 0)
+		if readBack >= 1
+			StorageUtil.SetIntValue(None, "SLOVE_MfgFixBroken", 0)
+			SLOVE_Log.WriteLog("Mfg Fix NG probe OK (phoneme round-trip = " + readBack + ", attempt " + (attempt + 1) + "/3)", 0)
+			return
+		endif
+		sawZero = sawZero || readBack == 0
+		attempt += 1
+	endwhile
+	if sawZero
 		StorageUtil.SetIntValue(None, "SLOVE_MfgFixBroken", 1)
-		SLOVE_Log.WriteLog("Mfg Fix NG is missing or not working: a phoneme written through MfgConsoleFuncExt did not read back. Faces cannot be driven or reset (stuck/deformed faces, tongues through closed lips). Install/update Mfg Fix NG and let it win its file conflicts.", 2)
-	elseif readBack >= 1
-		SLOVE_Log.WriteLog("Mfg Fix NG probe OK (phoneme round-trip = " + readBack + ")", 0)
+		SLOVE_Log.WriteLog("Mfg Fix NG is missing or not working: phoneme writes through MfgConsoleFuncExt did not read back (3 attempts). Faces cannot be driven or reset (stuck/deformed faces, tongues through closed lips). Install/update Mfg Fix NG and let it win its file conflicts.", 2)
 	endif
-	;negative readBack = the player's face data is unreadable right now - no verdict
+	;every read negative = the player's face data was unreadable - no verdict
 EndEvent
 
 Function InitializeDirectorConfigs()

@@ -196,7 +196,7 @@ EndFunction
 ;PullOutGape) and the gag pool (routed via gag_slot, not this slot) are excluded.
 ;Names match case- and space-insensitively in AudioUtil, so exact casing is cosmetic.
 String[] Function AllFemaleVariationBCategories() Global
-	String[] cats = new String[65]
+	String[] cats = new String[69]
 	cats[0] = "After Orgasm Comments"
 	cats[1] = "After Orgasm Comments Intense"
 	cats[2] = "Blowjob Action"
@@ -265,5 +265,12 @@ String[] Function AllFemaleVariationBCategories() Global
 	;the lead penetrating her partner (giving-penetration comment beat) - falls
 	;back to Amused for packs that don't voice it
 	cats[64] = "Penetrating Comments"
+	;0.6.14: the stage-transition and anal-intense beats now emit their B names.
+	;All four had ladder rungs and expression arms already; only the debugtext was
+	;missing, so a pack could ship these folders and never have them opened.
+	cats[65] = "Insertion Vaginal Comments"
+	cats[66] = "Insertion Anal Comments"
+	cats[67] = "Intense Transition Comments"
+	cats[68] = "Male Orgasm Soon Ask For Anal Cum Intense"
 	return cats
 EndFunction

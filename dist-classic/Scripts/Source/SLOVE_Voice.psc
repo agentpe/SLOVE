@@ -1152,6 +1152,10 @@ String Function PartnerImplement(Bool a_inferStrapon = true)
 		return "cock"
 	elseif !a_inferStrapon
 		return ""
+	elseif Sexlab.GetGender(mainMaleActor) > 1
+		;a FEMALE creature (gender 3 - males pass HasCock above) wears no gear, so
+		;the F/F strapon inference must not apply; absent is the safe degrade here too
+		return ""
 	endif
 	return "strapon"
 EndFunction
@@ -2646,7 +2650,7 @@ function ASLPlayMaleClosetoOrgasmCommentsVarB()
 				PlaySound("TeaseMaleCloseToOrgasmSoft", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Vaginal Cum Intense")
 			elseif CurrentPenetrationLvl() == 3
 				;Male Orgasm Soon Ask for Anal Cum Intense
-				PlaySound("TeaseMaleCloseToOrgasmIntense", mainFemaleActor, soundPriority = 1 , debugtext = "TeaseMaleCloseToOrgasmIntense")
+				PlaySound("TeaseMaleCloseToOrgasmIntense", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Anal Cum Intense")
 			EndIf
 		else
 			if CurrentPenetrationLvl() == 1
@@ -3005,12 +3009,14 @@ Function ASLPlayStageTransition()
 
 				PlaySound("Unamused", mainFemaleActor, debugtext="Unamused")
 			elseif IsGettingAnallyPenetrated()
-
-				PlaySound("InsertionAnalSlow", mainFemaleActor, soundPriority = 1 , debugtext="InsertionAnalSlow")
+				;B-name wired so the remap can reach a pack's insertion folders (the
+				;ladder rungs Insertion Anal/Vaginal Comments -> Penetrated Comments
+				;and the expression arms already existed - only this debugtext didn't)
+				PlaySound("InsertionAnalSlow", mainFemaleActor, soundPriority = 1 , debugtext="Insertion Anal Comments")
 
 			else
 
-				PlaySound("InsertionGeneric", mainFemaleActor,  soundPriority = 1 , debugtext="InsertionGeneric")
+				PlaySound("InsertionGeneric", mainFemaleActor,  soundPriority = 1 , debugtext="Insertion Vaginal Comments")
 			endif
 
 		endif
@@ -3042,7 +3048,9 @@ Function ASLPlayStageTransition()
 		elseif !FemaleIsVictim()
 
 			if Utility.randomfloat(0.0,1.0) < chancetocommentonintensestage
-				PlaySound("MaleHalfwayIntense", mainFemaleActor, soundPriority = 1 , debugtext="MaleHalfwayIntense")
+				;B-name wired: the slow->fast transition comment (ladder rung
+				;Intense Transition Comments -> Penetrated Comments Intense existed)
+				PlaySound("MaleHalfwayIntense", mainFemaleActor, soundPriority = 1 , debugtext="Intense Transition Comments")
 			endif
 		else
 

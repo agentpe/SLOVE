@@ -2030,8 +2030,12 @@ Function PlayFuckingOthersVarB()
 	if CommentedClosetoOrgasm
 		PlayMoanonlyVarB()
 	elseif Utility.RandomFloat(0.0, 1.0) < ChanceToCommentononAttackingStage
-		;Amused
-		PlaySound("Amused", mainFemaleActor, debugtext = "Amused")
+		;dedicated giving-penetration comment beat: packs that voice it ship the
+		;folder (tags refine inside - the facts already carry giv/place/implement);
+		;packs that don't fall to Amused via [category_fallbacks.female], the
+		;category this beat requested before. No variation gate - coverage is the
+		;pack's own folder, exactly like Licking/Rimjob.
+		PlaySound("Penetrating Comments", mainFemaleActor, debugtext = "Penetrating Comments")
 
 	else
 		PlayMoanonlyVarB()
@@ -3500,7 +3504,7 @@ Function ChangePCExpressions(String debugtext = "")
 		ChangeHentaiExpression("penetrationcomments")
 	elseif debugtext =="MaleOrgasmReactionIntense"  || debugtext =="MaleHalfwayIntense" || debugtext =="Penetrated Anal Comments Intense" || debugtext =="Penetrated Comments Intense" || debugtext =="Penetrated Broken Comments Intense"
 		ChangeHentaiExpression("intensepenetrationcomments")
-	elseif debugtext == "Amused" || debugtext == "Foreplay Tease Orgasm" ||  debugtext == "Male Orgasmed Inside Femdom"
+	elseif debugtext == "Amused" || debugtext == "Penetrating Comments" || debugtext == "Foreplay Tease Orgasm" ||  debugtext == "Male Orgasmed Inside Femdom"
 		ChangeHentaiExpression("Amused")
 	elseif debugtext == "Ending Orgasmed Inside Pussy" || debugtext == "Ending Orgasmed Inside Mouth" || debugtext == "After Orgasm Comments" || debugtext == "Ending Orgasmed Inside Ass"
 		ChangeHentaiExpression("Ending")

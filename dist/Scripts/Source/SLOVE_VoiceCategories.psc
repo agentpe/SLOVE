@@ -61,6 +61,8 @@ String Function MaleOnlyRemap(String femaleCategory) Global
 		return "Aggressive"
 	elseif femaleCategory == "Amused"
 		return "JokeAroused"
+	elseif femaleCategory == "Penetrating Comments"
+		return "JokeAroused" ;same male analog as Amused, its fallback target
 	elseif femaleCategory == "InAwe"
 		return "Aroused"
 	elseif femaleCategory == "TeaseAggressivePartner"
@@ -194,7 +196,7 @@ EndFunction
 ;PullOutGape) and the gag pool (routed via gag_slot, not this slot) are excluded.
 ;Names match case- and space-insensitively in AudioUtil, so exact casing is cosmetic.
 String[] Function AllFemaleVariationBCategories() Global
-	String[] cats = new String[64]
+	String[] cats = new String[65]
 	cats[0] = "After Orgasm Comments"
 	cats[1] = "After Orgasm Comments Intense"
 	cats[2] = "Blowjob Action"
@@ -260,5 +262,8 @@ String[] Function AllFemaleVariationBCategories() Global
 	cats[61] = "Rimjob Intense"
 	cats[62] = "Rimjob Comments"
 	cats[63] = "Rimjob Forced"
+	;the lead penetrating her partner (giving-penetration comment beat) - falls
+	;back to Amused for packs that don't voice it
+	cats[64] = "Penetrating Comments"
 	return cats
 EndFunction

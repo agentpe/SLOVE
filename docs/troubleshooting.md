@@ -21,7 +21,7 @@ For more detail, raise AudioUtil's verbosity in the base `AudioUtil.toml`:
 log_level = "debug"     # trace | debug | info | warn | error
 ```
 
-and turn on the live console play-by-play with `printdebug = 1` in the relevant [`SLOVE.toml`](config/slove.md) section (`[director]`, `[voice]`, `[expressions]`, `[sfx]`).
+and turn on the play-by-play with `printdebug = 1` in the relevant [`SLOVE.toml`](config/slove.md) section (`[director]`, `[voice]`, `[expressions]`, `[sfx]`) — it is written to `SLOVE.log`, not the console. For voice specifically, see [Checking Your Pack](packs/checking.md#watching-it-happen-in-game).
 
 ## Enabling Papyrus logging
 

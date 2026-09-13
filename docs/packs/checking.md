@@ -42,7 +42,7 @@ python packcheck.py "C:\path\to\My Pack" --slove "E:\mods\SLO VE"
 ## Reading the report
 
 ```
-SLO VE pack check - slot F2, variation B
+SLO VE pack check - as slot F2 (backs onto F0B), variation B
   ...\Core\Sound\fx\SLOVE\MyVoice
   70 folders, 778 clips
   against 256 spoken call sites in SLOVE_Voice.psc
@@ -92,3 +92,73 @@ falls through to, which is a reasonable shopping list if you want to record more
 
 `1` if anything in the first or second section was reported, `0` if not, so you
 can wire it into your own build.
+
+## Watching it happen in game
+
+`packcheck` tells you what *can* reach your pack. When you want to know what a
+particular scene actually did — a line that felt wrong, a beat you never hear —
+turn on the two logs and play it.
+
+### Turn them on
+
+**1. `Data\SKSE\Plugins\SLOVE\SLOVE.toml`** — two separate switches, you want
+both:
+
+```toml
+[director]
+printdebug = 1      # one line per voice line: category, facts, animation, and the wav that played
+
+[voice]
+printdebug = 1      # the voice engine's own reasoning: beats chosen, lines skipped and why
+```
+
+Then `sloveconfig reload` in the console — no restart.
+
+**2. `SkyrimCustom.ini`** (or `Skyrim.ini`). Without this, Papyrus writes no user
+logs at all and you will see nothing:
+
+```ini
+[Papyrus]
+bEnableLogging=1
+```
+
+This one needs a restart.
+
+**3. In the console:** `autest voicelog player`, which takes effect immediately.
+Use `all` instead if you are checking an NPC pack — it logs every speaker in
+every nearby scene, which gets loud fast. Note that it **restarts the file every
+time you run it**, so run it once at the start of a session, not before each
+scene.
+
+### Where they land
+
+| File | Holds |
+|---|---|
+| `Documents\My Games\Skyrim Special Edition\Logs\Script\User\SLOVE.log` | SLO VE's side — the beat, the scene, and the wav that played |
+| `Documents\My Games\Skyrim Special Edition\SKSE\AudioUtil_Voices.log` | AudioUtil's side — the tag pool, and why nothing played |
+
+Not the console. Both go to files, so they survive past the scene.
+
+### Reading them
+
+Start with **SLOVE.log**. One line per voice line, ending in the file that played:
+
+```
+Voice : Play 'PenetrativeCommentsIntense' actor=Lily slot=F2 facts=[rcv vaginal intense]
+        anim=FB_Missionary stage=3 group=pc_low chan=slove_pc
+        -> Sound\fx\SLOVE\Lily\Penetrated Comments Intense\pci_03.wav
+```
+
+If that path is not inside your own folder, the beat is not reaching you — and
+you now have the animation and the stage it happened in.
+
+Go to **AudioUtil_Voices.log** for the layer underneath, which SLO VE cannot see:
+which tagged **pool** answered the line, whether the pick had to drop to a lower
+pool because your best one ran out of clips (marked `v`), and the reason a call
+played nothing at all (`MISS`). That is the log to read when the right *folder*
+is being chosen but the wrong *clips* keep coming out of it.
+
+!!! tip "Use both, in that order"
+    SLO VE's log says which beat it asked for and what came out. AudioUtil's says
+    how resolution got there. A pack question is usually answered by the first; a
+    tagging question always needs the second.

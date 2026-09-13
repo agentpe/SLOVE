@@ -32,7 +32,7 @@ Master switches and scene detection.
 | `enablenpcscenes` | `1` | Process **NPC-only** SexLab scenes (no player) — see [NPC-only scenes](#npc-only-scenes) below. `0` = the pre-0.5.x behavior (player scenes only). |
 | `npcscenedistance` | `2048.0` | *(float)* Max distance (game units, ≈ hearing range) from the player to adopt an NPC scene. |
 | `maxnpcscenes` | `3` | Cap on concurrent NPC scenes processed at once (protects the Papyrus VM in busy areas). |
-| `printdebug` | `0` | Print director decisions to the console. |
+| `printdebug` | `0` | Log director decisions to `SLOVE.log`, **including the per-line voice trace** — category, facts, animation, stage, and the exact wav that played. See [Checking Your Pack](../packs/checking.md#watching-it-happen-in-game). |
 
 ### NPC-only scenes
 
@@ -104,7 +104,7 @@ Raise these for a chattier scene, lower them for mostly-moaning. `moanonly = 1` 
 | `orgasmvolume` | `100` | `0–100`, applied to the dedicated `pc_orgasm` group — the PC's climax/orgasm cries only. Independent of `pcvolume`, so you can raise or lower orgasm cries without touching ordinary moans/comments. (If the key is removed entirely it falls back to `pcvolume`.) |
 | `partnervolume` | `100` | `0–100`, applied to the `partner_low`/`partner_high` groups — partners **in your own scene**. |
 | `npcscenevolume` | `100` | `0–100`, applied to the dedicated `npc_low`/`npc_high` groups — **NPC-only scenes** (moans/breathing/reactions *and* their orgasm cries). Lets you make nearby NPC scenes quieter than your own without touching `partnervolume`. Falls back to `partnervolume` if the key is removed. AudioUtil's distance `voice_attenuation` still applies on top. |
-| `printdebug` | `0` | Print each voice decision (category, slot, handle) to the console. |
+| `printdebug` | `0` | Log the voice engine's own reasoning to `SLOVE.log` — the beat chosen for each cadence, and lines dropped (busy speaker, scene ended, game frozen behind a menu) with the reason. The played-file trace is `[director] printdebug`, above. |
 
 ## `[expressions]`
 

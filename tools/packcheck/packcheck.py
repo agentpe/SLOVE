@@ -31,8 +31,9 @@ import glob
 import os
 import re
 import sys
-import tomllib
 from collections import defaultdict
+
+import tomllib
 
 MAX_FALLBACK_HOPS = 8        # AudioUtil's kMaxCategoryFallbackHops
 PACK = '(your pack)'         # stands in for the pack's own slot id in the chain
@@ -163,7 +164,7 @@ def parse_calls(psc_path):
     pattern = re.compile(r'PlaySound\(\s*"([^"]+)"\s*,\s*([A-Za-z_]\w*)(.*?)\)\s*(?:;|$)', re.M)
     for match in pattern.finditer(src):
         category, actor, rest = match.group(1), match.group(2), match.group(3)
-        debug = re.search(r'debugtext\s*=\s*"([^"]*)"', rest)
+        debug = re.search(r'debugtext\s*=\s*"([^"]*)"', rest, re.IGNORECASE)
         voice_actor = re.search(r'voiceActor\s*=\s*([A-Za-z_]\w*)', rest)
         female = 'forceFemaleVoice' in rest or (actor == 'mainFemaleActor' and not voice_actor)
         if female:

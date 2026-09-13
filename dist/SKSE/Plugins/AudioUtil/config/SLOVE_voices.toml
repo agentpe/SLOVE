@@ -222,6 +222,45 @@ RimjobIntense = "Blowjob Action Intense"
 RimjobComments = "Blowjob Remarks"
 RimjobForced = "BlowjobActionSoft"
 
+# --- A-name -> B-folder bridges (same beat, different spelling) ---
+# PlaySound's per-actor VarB remap only fires when a call site's debugtext
+# DIFFERS from the category name - the debugtext IS the B folder name. A handful
+# of beats pass the A name as their own debugtext (nothing to remap to), yet the
+# B layout spells that beat differently: "Penetrative..." vs the on-disk
+# "Penetrated...", and the cum-request pools, whose B folders spell out the whole
+# beat. Those requests reached AudioUtil under a name no folder, alias or
+# fallback matched, so they fell past the pack to the F0/F0B stock moans with the
+# pack's own populated folder sitting unused - "SLOVE asked for
+# PenetrativeCommentsIntense and I heard a SexLab moan". Reported from a full
+# scene log: three of these (PenetrativeCommentsIntense/-Soft, AskForVaginalCum)
+# never reached a pack at all.
+#
+# FALLBACKS rather than [category_aliases.female] on purpose: an alias is one hop
+# and dead-ends, a fallback keeps walking the ladder below. So a tag-shaped (vD)
+# pack that ships only "Penetrated Comments" and expresses intensity as a TAG
+# still lands in-pack (-> "Penetrated Comments Intense" -> "Penetrated Comments"),
+# which an alias would not have done. Inert everywhere the literal name exists:
+# F0/F0B and the A packs list it, and the literal is always tried first.
+PenetrativeCommentsIntense = "Penetrated Comments Intense"
+PenetrativeCommentsSoft = "Penetrated Comments"
+AskForVaginalCum = "Male Orgasm Soon Ask For Vaginal Cum"
+AskForAnalCum = "Male Orgasm Soon Ask For Anal Cum"
+AskForOralCum = "Male Orgasm Soon Ask For Oral Cum"
+# the same class, found by auditing every PlaySound call site against a B pack's
+# folder list: the beat exists in both layouts under different names, and the
+# call site passes the A name so nothing bridged them. Each target already has
+# its own rung in the ladder below, so a pack missing it degrades from there.
+# (AskForPacingBreak is fixed for free - it falls to "Penetrative Comments Soft",
+# which now continues instead of dead-ending.)
+BlowjobActionSoft = "Blowjob Action"
+BlowjobRemarks = "Blowjob Comments"
+BreathyIntense = "Breathing Intense"
+CameInMouth = "Ending Orgasmed Inside Mouth"
+CameInPussy = "Ending Orgasmed Inside Pussy"
+CameInAss = "Ending Orgasmed Inside Ass"
+IntenseAnal = "Penetrated Anal Comments Intense"
+PullOut = "Penetrated Tell Male to Pull Out"
+
 # --- Variation-B variant fallbacks ---
 # A Variation-B pack that omits an intense / partition variant plays ITS OWN base
 # line first: the category resolves IN-PACK via these substitutions before the F0/F0B

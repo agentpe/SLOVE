@@ -525,6 +525,7 @@ Function AdoptScene()
 	CurrentThread = Sexlab.GetPlayerController() ;CURRENT THREAD (classic)
 	CurrentThreadID = CurrentThread.tid
 	CurrentAnimation = CurrentThread.Animation
+	CurrentSceneName = CurrentAnimation.Name
 	CurrentStageNum = CurrentThread.Stage
 	isAlmostFinalStage = isAlmostFinalStage()
 	IsFinalStage = IsFinalStage()
@@ -637,6 +638,7 @@ Function DirectorEndScene()
 
 	CurrentThread = none
 	CurrentAnimation = none
+	CurrentSceneName = ""
 	CurrentStageNum = 0
 	updaterate = 0.5
 
@@ -705,6 +707,7 @@ Event OnUpdate()
 	if UpdateNow || CurrentAnimation != CurrentThread.Animation || CurrentStageNum != CurrentThread.Stage
 		printdebug("Updating labels: Scene or Stage changed.")
 		CurrentAnimation = CurrentThread.Animation
+		CurrentSceneName = CurrentAnimation.Name
 		CurrentStageNum = CurrentThread.Stage
 		isAlmostFinalStage = isAlmostFinalStage()
 		IsFinalStage = IsFinalStage()
@@ -1149,24 +1152,15 @@ EndFunction
 ;0 = not probed yet, 1 = AudioUtil supports tagged playback, -1 = it predates it
 int audioUtilTagAPI
 
+;the running animation's display name, cached at every scene change so the voice
+;trace can name it without a registry lookup per line
+string CurrentSceneName
+
 Function PlaySound(String theSound, Actor actorMakingSound, Bool waitForCompletion = True, String group = "", String channel = "", String facts = "")
 	;theSound is a AudioUtil category name; slot is resolved from the actor by the DLL.
 	;blockLipSync per line when a face (SLS ahegao or our own climax face) owns the
 	;actor's mouth, so the moan can't flap the jaw over it. Decided per call - there
 	;is no standing block in AudioUtil.
-	;resolution trace (before the play) - answers "which folder did this play from?":
-	;slot+category maps to a folder in AudioUtil\config\SLOVE_voices.toml. files 0 =
-	;the category resolved empty (missing/BSA-packed/misnamed folder) so nothing will
-	;play; files>0 but still silent points at the scene-end stop/duck. NB
-	;GetCategoryFileCount bypasses gag/sfx routing, so it can differ for a gagged
-	;actor. Mirrored to the SLOVE log so it survives past the console.
-	if enableprintdebug == 1
-		string slot = AudioUtil.GetSlotForActor(actorMakingSound)
-		int files = AudioUtil.GetCategoryFileCount(slot, theSound)
-		string line = "Play '" + theSound + "' actor=" + actorMakingSound.GetDisplayName() + " slot=" + slot + " files=" + files + " group=" + group + " chan=" + channel + " facts=[" + facts + "]"
-		printdebug(line)
-		SLOVE_Log.WriteLog("Voice : " + line, 0)
-	endif
 	;PlayTagged with empty facts is byte-for-byte AudioUtil.Play, so every line
 	;routes through the tagged path unconditionally - no per-variation branch.
 	;The facts only engage tagged pools a Variation-D pack actually ships.
@@ -1185,11 +1179,45 @@ Function PlaySound(String theSound, Actor actorMakingSound, Bool waitForCompleti
 			SLOVE_Log.WriteLog("Voice : AudioUtil API v" + AudioUtil.GetAPIVersion() + " predates tagged playback (v6 / 0.9.17) - Variation-D facts ignored, untagged pools play as before", 0)
 		endif
 	endif
+	int h
 	if audioUtilTagAPI == 1
-		AudioUtil.PlayTagged(theSound, actorMakingSound, facts, waitForCompletion, 1.0, group, channel, mouthOwned)
+		h = AudioUtil.PlayVoiceTagged(actorMakingSound, theSound, facts, 1.0, group, channel, mouthOwned)
 	else
-		AudioUtil.Play(theSound, actorMakingSound, waitForCompletion, 1.0, group, channel, mouthOwned)
+		h = AudioUtil.PlayVoice(actorMakingSound, theSound, 1.0, group, channel, mouthOwned)
 	endif
+	if enableprintdebug == 1
+		TraceVoiceLine(theSound, actorMakingSound, group, channel, facts, h)
+	endif
+	if waitForCompletion
+		AudioUtil.WaitForHandle(h)
+	endif
+EndFunction
+
+;Resolution trace for the voice log, written AFTER the play so it can state the
+;OUTCOME and not just the request. That distinction is the whole point of it:
+;the old trace printed `files=` from GetCategoryFileCount, which is a FULL
+;resolve - it walks the alias/fallback ladder and the fallback-slot chain - so
+;for the thirteen A-name/B-folder mismatches fixed in 0.6.15 it happily reported
+;the F0 stock folder's file count and looked healthy while the pack was being
+;bypassed entirely. A log of what we ASKED for cannot catch a resolution bug.
+;GetHandlePath is ground truth: the exact wav AudioUtil chose, whose path names
+;the pack folder it came from. Read right after the play, while the instance is
+;alive. `files` survives only on the nothing-played branch, where it still
+;separates "the category resolves nowhere" from "it resolves but the line was
+;dropped" (scene-end stop, duck, or a busy channel).
+Function TraceVoiceLine(String theSound, Actor actorMakingSound, String group, String channel, String facts, Int h)
+	string slot = AudioUtil.GetSlotForActor(actorMakingSound)
+	string line = "Play '" + theSound + "' actor=" + actorMakingSound.GetDisplayName()
+	line = line + " slot=" + slot + " facts=[" + facts + "]"
+	line = line + " anim=" + CurrentSceneName + " stage=" + CurrentStageNum
+	line = line + " group=" + group + " chan=" + channel
+	if h > 0
+		line = line + " -> " + AudioUtil.GetHandlePath(h)
+	else
+		line = line + " -> NOTHING PLAYED (resolved folder holds " + AudioUtil.GetCategoryFileCount(slot, theSound) + " files)"
+	endif
+	printdebug(line)
+	SLOVE_Log.WriteLog("Voice : " + line, 0)
 EndFunction
 
 ;true while any SLO VE face owns this actor's mouth - the Director's SLS ahegao

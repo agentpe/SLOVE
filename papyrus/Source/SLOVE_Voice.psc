@@ -970,8 +970,12 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 			imp = PartnerImplement()
 		endif
 	elseif IsGettingDoublePenetrated()
-		;two holes have no single answer - direction only
+		;two holes at once. One fact per axis means this cannot be anal+vaginal, so
+		;the vocabulary carries "dp" for exactly this - stated rather than left
+		;blank as it used to be ("two holes have no single answer"). PPA's Both
+		;site lands on the same token.
 		dir = "rcv"
+		place = "dp"
 		imp = PartnerImplement()
 	elseif IsGettingAnallyPenetrated()
 		dir = "rcv"
@@ -1030,6 +1034,16 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 		place = "feet"
 		imp = PartnerImplement(false)
 	endif
+	;PPA outranks the label chain above whenever it can name the hole. Its own
+	;in-scene redirect menu rewrites the site, while the SexLab labels this chain
+	;reads stay fixed for the animation - which is exactly the report that brought
+	;this in ("I switched hole in PPA's menu and the facts still said the original
+	;position"). Only for a line that states an act at all, and never against an
+	;explicit actPlace: that is the CALL SITE naming its own act (a climax-in-mouth
+	;line), not a label guess for PPA to correct.
+	if dir != "" && actPlace == ""
+		place = PPAPlace(place, dir)
+	endif
 	if dir != ""
 		;a partner line inverts the direction: her rcv is his giv
 		if !lead
@@ -1057,6 +1071,80 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 		f += PartnerFacts(mainFemaleActor)
 	endif
 	return f
+EndFunction
+
+;AudioUtil exposes PPA's penetration site from API v9 (0.9.21). Probed once and
+;cached tri-state, exactly like Director's tagged-playback probe: on an older
+;AudioUtil the native cannot bind and would take every voice line down with it,
+;so the label chain simply stays authoritative there.
+int audioUtilSiteAPI
+
+Bool Function PPASiteAvailable()
+	if audioUtilSiteAPI == 0
+		if AudioUtil.GetAPIVersion() >= 9
+			audioUtilSiteAPI = 1
+		else
+			audioUtilSiteAPI = -1
+			SLOVE_Log.WriteLog("SLO VE Voice : AudioUtil API v" + AudioUtil.GetAPIVersion() + " predates the PPA penetration site (v9 / 0.9.21) - place facts come from the animation labels alone", 0)
+		endif
+	endif
+	return audioUtilSiteAPI == 1
+EndFunction
+
+;The place fact. PPA is asked FIRST for every act, whatever the labels said, and
+;the labels are the fallback for when it has no usable answer:
+;  * Mouth/Anus/Vagina -> oral/anal/vaginal, and the three hand sites -> "hand"
+;    (PPA's site names where the PENIS is, so a hand site is a handjob).
+;  * Both (4) -> "dp", the place token that names two venues at once (one fact
+;    per axis, so a DP cannot be anal+vaginal). The label chain emits the same
+;    token, so a DP is stated with or without PPA.
+;  * None (0) is the only fall-back to the labels: nothing measured.
+;  * every label place is overridable, "chest" and "feet" included. PPA cannot
+;    CONFIRM those two (its enum has no breast or foot value), so for them this
+;    is override-or-nothing by construction. Known trade, accepted deliberately:
+;    place is one fact per axis, so overruling a titfuck's "chest" with
+;    "vaginal" leaves the dispatched category and the facts describing different
+;    acts, and in a group scene that penetration may be a THIRD actor's, which
+;    our lead-vs-partner place was never about. If that reads wrong in play, the
+;    narrow fix is a GetDepth() > 0 gate here rather than restoring a whitelist.
+;  * a DP now states "dp" from either source, where the axis used to go out
+;    blank entirely.
+;Perspective matters: `place` is still lead-perspective at the call site (the
+;partner inversion happens after), so the hole belongs to the LEAD on a
+;receiving act and to her opposite number on a giving one. Asking the other
+;actor would report the wrong body. Note PPA's selfInteraction site is NOT used
+;here - per its docs that one is self-penetration, a different act entirely.
+;The site field's liveness is not something PPA's docs state outright (see
+;AudioUtil docs/ppa-api-assumptions.md section 6) - hence the narrow blast
+;radius: when PPA says nothing useful, every line behaves exactly as before.
+String Function PPAPlace(String labelPlace, String dir)
+	;cached local probe first, so an AudioUtil too old for this costs no externals
+	if !PPASiteAvailable() || !AudioUtilPPA.IsConnected()
+		return labelPlace
+	endif
+	Actor receiver = mainFemaleActor
+	if dir == "giv"
+		receiver = mainMaleActor
+	endif
+	if receiver == None
+		return labelPlace
+	endif
+	int site = AudioUtilPPA.GetPenetrationSite(receiver)
+	if site == 1        ;Mouth
+		return "oral"
+	elseif site == 2    ;Anus
+		return "anal"
+	elseif site == 3    ;Vagina
+		return "vaginal"
+	elseif site >= 5 && site <= 7   ;HandL / HandR / Hands
+		;PPA's site names where the PENIS is (the struct carries penisSize), so a
+		;hand site is a handjob - the same thing our "hand" token means.
+		return "hand"
+	elseif site == 4    ;Both - a DP
+		return "dp"
+	endif
+	;site 0 None: nothing measured, so the labels have it
+	return labelPlace
 EndFunction
 
 ;partner-axis fact for the actor on the other side of a line: " man", " woman",

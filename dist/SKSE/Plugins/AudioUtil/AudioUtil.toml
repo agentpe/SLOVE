@@ -174,7 +174,10 @@ intensity = { tokens = ["soft", "intense"], weight = 8 }
 # giv/rcv = who acts on whom, from the speaker's perspective
 direction = { tokens = ["giv", "rcv"], weight = 4 }
 # body venue of the act
-place     = { tokens = ["anal", "vaginal", "oral", "chest", "hand", "feet"], weight = 2 }
+# "dp" is the one token naming TWO venues at once - one fact per axis means a DP
+# cannot emit anal+vaginal, so it gets its own value. Emitted by the label chain
+# (IsGettingDoublePenetrated) and by PPA's Both site.
+place     = { tokens = ["anal", "vaginal", "oral", "chest", "hand", "feet", "dp"], weight = 2 }
 # what does the penetrating: the lead's own, or the one she is wearing
 implement = { tokens = ["cock", "strapon"], weight = 1 }
 partner   = { tokens = ["man", "woman", "futa", "creature"], weight = 1 }

@@ -23,8 +23,12 @@ Float secondaryLineCooldown        ;randomized pause between non-lead lines
 ;--- female NPC partners: non-PC human females voice their own moans on their own F2-F10 slot.
 ;The engine's lead female is ALWAYS the PC; this is the secondary channel for everyone else.
 Actor[] sceneFemales               ;all non-PC human females (not males/schlongs, not creatures)
-Float lastFemaleLineTime           ;scene time a female NPC last spoke
-Float femaleLineCooldown           ;randomized pause between female-NPC lines
+Float lastFemaleLineTime           ;scene time a female NPC bystander last spoke
+Float femaleLineCooldown           ;randomized pause between female-NPC bystander lines
+Float lastPartnerFemaleLineTime    ;scene time the female PARTNER (mainMaleActor role slot) last spoke
+Float partnerFemaleLineCooldown    ;randomized pause between her lines (PlayFemalePartnerComments)
+Bool partnerIsVoicedFemale = false ;cached per scene: the partner role slot holds a voiced human female
+Bool sceneHasPenetrator = false    ;any male (PC included) or creature in the scene - the bystander no-PPA grunt gate
 ;--- creature ambience: voiced creatures (C-slots via [race_map]) pant/growl on a cadence
 Actor[] sceneCreatures
 Float lastCreatureBreathTime
@@ -296,17 +300,20 @@ Function FindActorsAndVoices()
 	sceneFemales = PapyrusUtil.ActorArray(0)
 	sceneCreatures = PapyrusUtil.ActorArray(0)
 
+	sceneHasPenetrator = false
 	While actorIndex < actorCount
 		Actor actorInQuestion = actorList[actorIndex]
 		if actorInQuestion == playerCharacter
 			PCPosition = actorIndex
 		elseif IsVoicedMale(actorInQuestion)
+			sceneHasPenetrator = true
 			If mainMaleActor == None
 				mainMaleActor = actorInQuestion
 				mainMaleIsVoiced = true
 			EndIf
 			sceneMales = PapyrusUtil.PushActor(sceneMales, actorInQuestion)
 		elseif Sexlab.GetGender(actorInQuestion) > 1
+			sceneHasPenetrator = true ;voiced or not - FemaleNpcIsPenetrated cares about anatomy, not slots
 			if AudioUtil.GetSlotForActor(actorInQuestion) != ""
 				sceneCreatures = PapyrusUtil.PushActor(sceneCreatures, actorInQuestion)
 			endif
@@ -331,6 +338,18 @@ Function FindActorsAndVoices()
 	;When the PC (the "female" voice engine's actor) is male, every female
 	;category is remapped to its male counterpart at the PlaySound boundary.
 	maleOnlyScene = IsVoicedMale(playerCharacter)
+	if maleOnlyScene
+		sceneHasPenetrator = true ;a male (or schlonged) PC counts too
+	endif
+
+	;cached once per scene: does the partner role slot hold a voiced human female?
+	;(the orgasmerIsVoicedFemaleNPC predicate.) PlayFemalePartnerComments runs every
+	;update tick, so its guard must be internal - paid one time here instead of
+	;three external calls per tick for the life of the scene
+	partnerIsVoicedFemale = false
+	if mainMaleActor != None && !mainMaleIsVoiced
+		partnerIsVoicedFemale = !IsVoicedMale(mainMaleActor) && Sexlab.GetGender(mainMaleActor) <= 1 && AudioUtil.GetSlotForActor(mainMaleActor) != ""
+	endif
 
 	lastPartnerOrgasmActor = None
 	lastSecondaryLineTime = 0.0
@@ -339,6 +358,8 @@ Function FindActorsAndVoices()
 	maleMoanCooldown = Utility.RandomFloat(2.0, 5.0) ;first male moan comes early
 	lastFemaleLineTime = 0.0
 	femaleLineCooldown = Utility.RandomFloat(6.0, 14.0)
+	lastPartnerFemaleLineTime = 0.0
+	partnerFemaleLineCooldown = Utility.RandomFloat(6.0, 14.0)
 	lastCreatureBreathTime = 0.0
 	creatureBreathCooldown = Utility.RandomFloat(2.0, 5.0) ;first breath comes early
 	printdebug("scene females voiced (NPC): " + sceneFemales.length)
@@ -382,6 +403,9 @@ EndFunction
 ;Rotation for secondary FEMALE NPC lines. Independent cooldown from the male one;
 ;returns None outside the cooldown or when no voiced female NPC is present, so the
 ;caller no-ops most ticks - these are ambience, not the lead PC female's beat.
+;BYSTANDERS ONLY: a female partner filling the mainMaleActor role slot is excluded
+;here and voiced by PlayFemalePartnerComments instead - the female mirror of how
+;PickSpeakingMale hands the lead male back to his own chain.
 Actor Function PickSpeakingFemale()
 	if sceneFemales.length == 0
 		return None
@@ -390,7 +414,11 @@ Actor Function PickSpeakingFemale()
 	if now - lastFemaleLineTime < femaleLineCooldown
 		return None
 	endif
-	Actor pick = sceneFemales[Utility.RandomInt(0, sceneFemales.length - 1)]
+	Actor[] bystanders = PapyrusUtil.RemoveActor(sceneFemales, mainMaleActor)
+	if bystanders.length == 0
+		return None ;the only female NPC is the partner - her chain has her
+	endif
+	Actor pick = bystanders[Utility.RandomInt(0, bystanders.length - 1)]
 	if pick == None
 		return None
 	endif
@@ -399,17 +427,22 @@ Actor Function PickSpeakingFemale()
 	return pick
 EndFunction
 
-;Voice a secondary female NPC partner. The lead female is always the PC; this gives
-;non-PC females their own moans on their resolved F2-F10 pool slot. MVP: intensity-aware
-;ambience (grunt vs near-orgasm moan) tracking the scene's soft/intense state, not her
-;own position. She is passed as actorMakingSound (NOT the PC), so PlaySound routes her
-;through the partner branch - partner group, her own channel, no PC-expression drive -
-;exactly like a male partner. forceFemaleVoice keeps the categories female even when the
-;PC is male (maleOnlyScene would otherwise remap them to male audio). PlaySound's own
-;per-actor unconscious/necro guard still silences her if she is the passive target.
+;Voice a female NPC BYSTANDER - a voiced human female who is neither the lead (the
+;PC) nor the lead's opposite number (PlayFemalePartnerComments has her). Ambience
+;on her resolved F2-F10 pool slot, tracking the scene's soft/intense state - and
+;act-NEUTRAL by default: the scene labels describe the lead and her partner and
+;say nothing about a third woman, so the old hardcoded "Penetrated Grunt" was a
+;guess, and the loud kind to get wrong (the only-penetrated-grunts reports - a
+;woman grunting as if penetrated through a scene the lead's own chain classified
+;as non-penetrative). She grunts only when PPA actually measures her penetrated;
+;otherwise she breathes. She is passed as actorMakingSound (NOT the PC), so
+;PlaySound routes her through the partner branch - partner group, her own channel,
+;no PC-expression drive. forceFemaleVoice keeps the categories female even when
+;the PC is male (maleOnlyScene would otherwise remap them to male audio).
+;PlaySound's own unconscious/necro guard still silences her if she is the target.
 Function PlayFemaleNPCComments()
 	;gated by the same voice.voiceallactors switch as the secondary males: 0 = only the
-	;PC and lead partner are voiced, so female NPCs stay silent too
+	;PC and lead partner are voiced, so female NPC bystanders stay silent too
 	if voiceAllActors != 1
 		return
 	endif
@@ -418,13 +451,100 @@ Function PlayFemaleNPCComments()
 		return
 	endif
 	;debugtext carries the on-disk B-folder name so a Variation-B pack voices her own
-	;grunt (via the per-actor VarB remap in PlaySound); an A / stock slot ignores it
-	;and falls back to the camelCase soundToPlay -> F0B stock moans. Folder names
-	;mirror the PC's PlayMoanonlyVarB penetration grunts.
-	if ASLCurrentlyintense
-		PlaySound("NearOrgasmNoises", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Intense", forceFemaleVoice = true)
+	;line (via the per-actor VarB remap in PlaySound); an A / stock slot ignores it
+	;and falls back to the camelCase soundToPlay. Folder names mirror the PC's own
+	;beats (PlayMoanonlyVarB grunts, the BreathySoft/BreathyIntense breathing filler).
+	if FemaleNpcIsPenetrated(speaker)
+		if ASLCurrentlyintense
+			PlaySound("NearOrgasmNoises", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Intense", forceFemaleVoice = true)
+		else
+			PlaySound("PenetrativeGrunts", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt", forceFemaleVoice = true)
+		endif
+	elseif ASLCurrentlyintense
+		PlaySound("BreathyIntense", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing Intense", forceFemaleVoice = true)
 	else
-		PlaySound("PenetrativeGrunts", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt", forceFemaleVoice = true)
+		PlaySound("BreathySoft", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing", forceFemaleVoice = true)
+	endif
+EndFunction
+
+;Is this female NPC actually being penetrated right now? PPA measures per
+;RECEIVER, so it can answer for any actor, bystander included; site 0 means
+;"nothing measured", so fall through (the same rule PPAPlace follows), while a
+;real site elsewhere (mouth, a hand) rules penetration out. Without a PPA answer:
+;the labels speak for the lead's opposite number (if the LEAD is giving
+;penetration her partner is receiving it - see BuildFacts), and a BYSTANDER -
+;whom the labels never describe - grunts only when the scene has someone to do
+;the penetrating (a male, the PC included, or a creature): an MFF bystander keeps
+;her plausible grunts, an all-female scene stops grunting at nobody. Same
+;composition rule as SLOVE_NpcScene's FemaleIsPenetrated.
+Bool Function FemaleNpcIsPenetrated(Actor a)
+	if a == None
+		return false
+	endif
+	if PPASiteAvailable() && AudioUtilPPA.IsConnected()
+		int site = AudioUtilPPA.GetPenetrationSite(a)
+		if site != 0
+			return site == 2 || site == 3 || site == 4 ;Anus / Vagina / Both
+		endif
+	endif
+	if a == mainMaleActor
+		return IsGivingAnalPenetration() || IsGivingVaginalPenetration()
+	endif
+	return sceneHasPenetrator
+EndFunction
+
+;Voice the lead's FEMALE partner - the woman filling the mainMaleActor role slot
+;(every F/F scene). She is the scene's co-star, not a bystander: BuildFacts and
+;the orgasm recorder already treat her as the partner (orgasmerIsSecondaryFemale),
+;and PickSpeakingFemale now leaves her to this chain - the female mirror of the
+;voiced male partner's PlayMaleComments/PlayMaleMoaning. Her category comes from
+;HER side of the act (ResolveSpeakerAct - the same inverted derivation her facts
+;carry), so the folder and the tags agree instead of hardcoding "Penetrated
+;Grunt" onto a woman the facts call the giver. Deliberately NOT gated on
+;voice.voiceallactors: 0 means "only the PC and the lead partner are voiced",
+;and she IS the lead partner (the male partner's chain is likewise ungated).
+Function PlayFemalePartnerComments()
+	;per-tick guard is INTERNAL: the identity externals were paid once at scene
+	;setup (partnerIsVoicedFemale rules out no-partner, voiced-male, creature and
+	;unvoiced fallbacks)
+	if !partnerIsVoicedFemale || TrackerRemoved
+		return
+	endif
+	Actor partner = mainMaleActor
+	Float now = CurrentThread.GetTimeTotal()
+	if now - lastPartnerFemaleLineTime < partnerFemaleLineCooldown
+		return
+	endif
+	lastPartnerFemaleLineTime = now
+	partnerFemaleLineCooldown = Utility.RandomFloat(6.0, 14.0)
+	;branch order mirrors the lead's own dispatch: mouth beats first (kissing, then
+	;a full mouth - "blowjob always first because muffled by cock"), then
+	;penetration, then neutral breathing as the floor
+	if IsKissing() && !IsRimming()
+		;kissing is the one symmetric act - the label speaks for both mouths.
+		;Same A-name + B-folder pair as the lead's PlayKissingVarB.
+		PlaySound("MaleOrgasmReactionLover", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Kissing", forceFemaleVoice = true)
+		return
+	endif
+	;her side of the act - the same values her fact string will carry
+	String[] act = ResolveSpeakerAct(partner)
+	if act[0] == "giv" && act[1] == "oral"
+		;her mouth is on the lead - muffled action sounds, not open moans
+		if ASLCurrentlyintense
+			PlaySound("BlowjobActionIntense", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action Intense", forceFemaleVoice = true)
+		else
+			PlaySound("BlowjobActionSoft", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action", forceFemaleVoice = true)
+		endif
+	elseif FemaleNpcIsPenetrated(partner)
+		if ASLCurrentlyintense
+			PlaySound("NearOrgasmNoises", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Intense", forceFemaleVoice = true)
+		else
+			PlaySound("PenetrativeGrunts", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt", forceFemaleVoice = true)
+		endif
+	elseif ASLCurrentlyintense
+		PlaySound("BreathyIntense", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing Intense", forceFemaleVoice = true)
+	else
+		PlaySound("BreathySoft", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing", forceFemaleVoice = true)
 	endif
 EndFunction
 
@@ -748,8 +868,12 @@ Event OnUpdate()
 		;males moan on their own cadence in EVERY scene - between dirty-talk lines, and
 		;as the only male sound under moanonly (where PlayMaleComments is suppressed).
 		PlayMaleMoaning()
-		;secondary female NPC partners voice their own moans on their pool slot (no-ops
-		;when there is no female NPC or inside the cooldown)
+		;the lead's FEMALE partner (F/F scenes: the woman in the mainMaleActor role
+		;slot) voices her own side of the act on her pool slot - the female mirror
+		;of the male partner's dirty-talk/moan chain above
+		PlayFemalePartnerComments()
+		;female NPC bystanders voice act-neutral ambience on their pool slots (no-ops
+		;when there is no female bystander or inside the cooldown)
 		PlayFemaleNPCComments()
 		;creature partners pant/growl on their own cadence
 		PlayCreatureBreathing()
@@ -947,11 +1071,42 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 	else
 		f += " neutral"
 	endif
-	;direction + place + implement, read off the lead-female labels. Those labels
-	;describe the lead and her opposite number (mainMaleActor - which is the
-	;creature in a creature scene) and NOBODY else: a third speaker, e.g. a second
-	;female NPC crying out on her own, gets no act facts at all, because inverting
-	;the lead's direction would state something about her we never measured.
+	;direction + place + implement - the speaker's side of the act. Shared with the
+	;female-partner dispatch (PlayFemalePartnerComments) via ResolveSpeakerAct, so
+	;the folder choice and the fact string can never drift apart.
+	String[] act = ResolveSpeakerAct(speaker, actDir, actPlace)
+	if act[0] != ""
+		f += " " + act[0]
+	endif
+	if act[1] != ""
+		f += " " + act[1]
+	endif
+	if act[2] != ""
+		f += " " + act[2]
+	endif
+	;partner - who is on the other side of the SPEAKER's line: the lead's opposite
+	;number for her lines, the lead herself for everyone else's. Same function both
+	;ways, so a futa lead reads as "futa" from either side instead of "man" to him
+	;and "futa" to herself.
+	if lead
+		f += PartnerFacts(mainMaleActor)
+	else
+		f += PartnerFacts(mainFemaleActor)
+	endif
+	return f
+EndFunction
+
+;The speaker's side of the act for one line: [0] = direction (giv/rcv/""),
+;[1] = place, [2] = implement. Extracted verbatim from BuildFacts so the
+;female-partner dispatch and the fact string read the same labels, the same PPA
+;override, and the same partner inversion - one derivation, two consumers.
+;Direction + place + implement are read off the lead-female labels. Those labels
+;describe the lead and her opposite number (mainMaleActor - which is the
+;creature in a creature scene) and NOBODY else: a third speaker, e.g. a second
+;female NPC crying out on her own, gets no act facts at all, because inverting
+;the lead's direction would state something about her we never measured.
+String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String actPlace = "")
+	bool lead = (speaker == mainFemaleActor)
 	String dir = ""
 	String place = ""
 	String imp = ""
@@ -1053,24 +1208,12 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 				dir = "rcv"
 			endif
 		endif
-		f += " " + dir
 	endif
-	if place != ""
-		f += " " + place
-	endif
-	if imp != ""
-		f += " " + imp
-	endif
-	;partner - who is on the other side of the SPEAKER's line: the lead's opposite
-	;number for her lines, the lead herself for everyone else's. Same function both
-	;ways, so a futa lead reads as "futa" from either side instead of "man" to him
-	;and "futa" to herself.
-	if lead
-		f += PartnerFacts(mainMaleActor)
-	else
-		f += PartnerFacts(mainFemaleActor)
-	endif
-	return f
+	String[] act = new String[3]
+	act[0] = dir
+	act[1] = place
+	act[2] = imp
+	return act
 EndFunction
 
 ;AudioUtil exposes PPA's penetration site from API v9 (0.9.21). Probed once and

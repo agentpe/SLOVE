@@ -17,6 +17,7 @@ Actor anchor
 Actor[] sceneMales
 Actor[] sceneFemales
 Actor[] sceneCreatures
+bool sceneHasPenetrator ;any male or creature in the raw position list (slot or not)
 int threadId
 
 ; ---- config ([voice]/[director] in SLOVE.toml) ----
@@ -117,6 +118,7 @@ Function BucketActors()
 	sceneMales = PapyrusUtil.ActorArray(0)
 	sceneFemales = PapyrusUtil.ActorArray(0)
 	sceneCreatures = PapyrusUtil.ActorArray(0)
+	sceneHasPenetrator = false
 	Actor[] actorList = CurrentThread.GetPositions()
 	int i = 0
 	while i < actorList.length
@@ -124,10 +126,12 @@ Function BucketActors()
 		if a
 			int g = SexLab.GetGender(a)
 			if g > 1
+				sceneHasPenetrator = true ;voiced or not - FemaleIsPenetrated cares about anatomy, not slots
 				if AudioUtil.GetSlotForActor(a) != ""
 					sceneCreatures = PapyrusUtil.PushActor(sceneCreatures, a)
 				endif
 			elseif g == 0
+				sceneHasPenetrator = true
 				sceneMales = PapyrusUtil.PushActor(sceneMales, a)
 			elseif AudioUtil.GetSlotForActor(a) != ""
 				sceneFemales = PapyrusUtil.PushActor(sceneFemales, a)
@@ -252,7 +256,7 @@ Function PlayFemaleNPCComments(bool intense)
 	endif
 	lastFemaleLineTime = now
 	femaleLineCooldown = Utility.RandomFloat(6.0, 14.0)
-	PlayAmbient(f, intense)
+	PlayAmbient(f, intense, true)
 EndFunction
 
 Function PlayCreatureBreathing(bool intense)
@@ -282,12 +286,52 @@ EndFunction
 ; channel, FaceOwnsMouth handled). The actor's own slot resolves male vs female audio,
 ; so no forceFemaleVoice is needed (unlike the PC-as-lead engine). Distance falloff for
 ; far NPC scenes is handled by AudioUtil ([general] voice_attenuation), not here.
-Function PlayAmbient(Actor a, bool intense)
+; For a FEMALE the grunt categories literally claim "penetrated", which this engine
+; cannot read off labels (it has none - see SceneFacts): she grunts only when
+; FemaleIsPenetrated says so, else she gets the breathing filler (BreathySoft /
+; BreathyIntense - the PC engine's act-neutral A-names, which stock F0 and packs
+; both resolve through the shipped fallback ladder). Males keep the grunt names:
+; on a male slot they ARE the generic moan categories (the PC engine's
+; PlayMaleMoaning requests the same two), not an act claim.
+Function PlayAmbient(Actor a, bool intense, bool female = false)
 	string cat = "PenetrativeGrunts"
 	if intense
 		cat = "NearOrgasmNoises"
 	endif
+	if female && !FemaleIsPenetrated(a)
+		if intense
+			cat = "BreathyIntense"
+		else
+			cat = "BreathySoft"
+		endif
+	endif
 	MasterScript.PlaySound(cat, a, False, "npc_low", "slove_np" + a.GetFormID(), SceneFacts(intense))
+EndFunction
+
+;-1 = installed AudioUtil predates the PPA penetration site (API v9 / 0.9.21), 1 =
+;available, 0 = not probed yet (cached per instance, like audioUtilPauseAPI below)
+int audioUtilSiteAPI
+
+; Is this female actually being penetrated? PPA answers per RECEIVER when it can
+; (site 0 = nothing measured, so fall through); with no PPA answer, grunt only when
+; the scene HAS a likely penetrator - a male or a creature, the common case, which
+; keeps M/F NPC scenes exactly as before - so an all-female scene breathes instead
+; of grunting at nobody.
+bool Function FemaleIsPenetrated(Actor a)
+	if audioUtilSiteAPI == 0
+		if AudioUtil.GetAPIVersion() >= 9
+			audioUtilSiteAPI = 1
+		else
+			audioUtilSiteAPI = -1
+		endif
+	endif
+	if audioUtilSiteAPI == 1 && AudioUtilPPA.IsConnected()
+		int site = AudioUtilPPA.GetPenetrationSite(a)
+		if site != 0
+			return site == 2 || site == 3 || site == 4 ;Anus / Vagina / Both
+		endif
+	endif
+	return sceneHasPenetrator
 EndFunction
 
 ;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet

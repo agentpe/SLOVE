@@ -456,16 +456,51 @@ Function PlayFemaleNPCComments()
 	;and falls back to the camelCase soundToPlay. Folder names mirror the PC's own
 	;beats (PlayMoanonlyVarB grunts, the BreathySoft/BreathyIntense breathing filler).
 	if FemaleNpcIsPenetrated(speaker)
+		PlayFemaleNpcGrunt(speaker)
+	else
+		PlayFemaleNpcBreath(speaker)
+	endif
+EndFunction
+
+;The penetrated-grunt beat for a female NPC, victim-partitioned. A coerced woman
+;grunts from the pack's Victim folders - the single biggest B-pack family an NPC
+;could never reach before. A-name/debugtext pairs are the ones the PC's own
+;PlayMoanonlyVarB uses for those exact folders, so an A/stock slot degrades the
+;same way hers does. Shared by the partner and the bystander chains.
+Function PlayFemaleNpcGrunt(Actor a)
+	if FemaleNpcIsVictim(a)
 		if ASLCurrentlyintense
-			PlaySound("NearOrgasmNoises", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Intense", forceFemaleVoice = true)
+			PlaySound("CumTogetherTease", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Victim Intense", forceFemaleVoice = true)
 		else
-			PlaySound("PenetrativeGrunts", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt", forceFemaleVoice = true)
+			PlaySound("Unamused", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Victim", forceFemaleVoice = true)
 		endif
 	elseif ASLCurrentlyintense
-		PlaySound("BreathyIntense", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing Intense", forceFemaleVoice = true)
+		PlaySound("NearOrgasmNoises", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Intense", forceFemaleVoice = true)
 	else
-		PlaySound("BreathySoft", speaker, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing", forceFemaleVoice = true)
+		PlaySound("PenetrativeGrunts", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt", forceFemaleVoice = true)
 	endif
+EndFunction
+
+;The act-neutral breathing floor. `heightened` forces the intense pool for a beat
+;that IS arousing regardless of the scene's soft/intense state - being serviced
+;orally, where flat breathing undersells what is happening to her.
+Function PlayFemaleNpcBreath(Actor a, Bool heightened = false)
+	if heightened || ASLCurrentlyintense
+		PlaySound("BreathyIntense", a, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing Intense", forceFemaleVoice = true)
+	else
+		PlaySound("BreathySoft", a, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing", forceFemaleVoice = true)
+	endif
+EndFunction
+
+;Is this female NPC the scene's submissive? Per-actor (SexLab's own flag), so it
+;answers for the partner and for a bystander alike - unlike MaleIsVictim(), which
+;can only ever ask about the partner role slot. Same EnableVictimScenario gate as
+;the lead's FemaleIsVictim(), so turning the victim scenario off turns this off too.
+Bool Function FemaleNpcIsVictim(Actor a)
+	if a == None || EnableVictimScenario != 1
+		return false
+	endif
+	return CurrentThread.IsVictim(a)
 EndFunction
 
 ;Is this female NPC actually being penetrated right now? PPA measures per
@@ -530,22 +565,21 @@ Function PlayFemalePartnerComments()
 	;her side of the act - the same values her fact string will carry
 	String[] act = ResolveSpeakerAct(partner)
 	if act[0] == "giv" && act[1] == "oral"
-		;her mouth is on the lead - muffled action sounds, not open moans
+		;her mouth is on the lead - muffled action sounds, not open moans. This is
+		;always a cock or a strapon: the partner only reads giv/oral from the lead's
+		;PenisActionLabel (SMF/FMF), and the label set has no "lead is being licked"
+		;state, so there is no cunnilingus case to route to the Licking pools here.
 		if ASLCurrentlyintense
 			PlaySound("BlowjobActionIntense", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action Intense", forceFemaleVoice = true)
 		else
 			PlaySound("BlowjobActionSoft", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action", forceFemaleVoice = true)
 		endif
 	elseif FemaleNpcIsPenetrated(partner)
-		if ASLCurrentlyintense
-			PlaySound("NearOrgasmNoises", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Intense", forceFemaleVoice = true)
-		else
-			PlaySound("PenetrativeGrunts", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt", forceFemaleVoice = true)
-		endif
-	elseif ASLCurrentlyintense
-		PlaySound("BreathyIntense", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing Intense", forceFemaleVoice = true)
+		PlayFemaleNpcGrunt(partner)
 	else
-		PlaySound("BreathySoft", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing", forceFemaleVoice = true)
+		;rcv/oral = the LEAD's mouth is on HER (she is being sucked, licked or
+		;rimmed): heightened breathing, since the soft pool would undersell it
+		PlayFemaleNpcBreath(partner, act[0] == "rcv" && act[1] == "oral")
 	endif
 EndFunction
 

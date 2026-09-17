@@ -1191,7 +1191,16 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 	;direction + place + implement - the speaker's side of the act. Shared with the
 	;female-partner dispatch (PlayFemalePartnerComments) via ResolveSpeakerAct, so
 	;the folder choice and the fact string can never drift apart.
-	String[] act = ResolveSpeakerAct(speaker, actDir, actPlace)
+	;always pass a real array - the VM logs a "received NONE to non-object
+	;argument" warning on every call that lets an array parameter fall back to
+	;its None default (one per voice line in Papyrus.0.log). A non-lead speaker
+	;with no explicit act gets a real reading (the overlay's exact
+	;precondition); everyone else gets empty = no measurement.
+	float[] snap = PapyrusUtil.FloatArray(0)
+	if speaker != mainFemaleActor && actDir == "" && actPlace == ""
+		snap = ReadPPA(speaker)
+	endif
+	String[] act = ResolveSpeakerAct(speaker, actDir, actPlace, snap)
 	if act[0] != ""
 		f += " " + act[0]
 	endif
@@ -1338,10 +1347,9 @@ String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String ac
 	;so it only applies to a human female. Never against an explicit call-site
 	;act - the same rule PPAPlace states above. The lead is untouched: her act
 	;already runs through PPAPlace inside the label chain.
-	if !lead && actDir == "" && actPlace == ""
-		if ppaSnap == None
-			ppaSnap = ReadPPA(speaker)
-		endif
+	;ppaSnap is the caller's job (BuildFacts and the NPC dispatch both supply it)
+	;- None means a straggler call site, and the overlay just stays out
+	if !lead && actDir == "" && actPlace == "" && ppaSnap != None
 		int ownSite = 0
 		if ppaSnap.length > 2
 			ownSite = ppaSnap[2] as int

@@ -302,7 +302,7 @@ Function PlayAmbient(Actor a, bool intense, bool female = false)
 	string cat = "PenetrativeGrunts"
 	string actFacts = ""
 	if female
-		float[] snap = ReadPPA(a)
+		float[] snap = SLOVE_PPA.Read(a)
 		;her own measured depth beats the anchor-enjoyment guess (0 = knob off)
 		if npcdepthintense > 0.0 && snap.length > 0 && snap[0] > 0.0
 			intense = snap[0] >= npcdepthintense
@@ -339,45 +339,8 @@ Function PlayAmbient(Actor a, bool intense, bool female = false)
 	MasterScript.PlaySound(cat, a, False, "npc_low", "slove_np" + a.GetFormID(), SceneFacts(intense) + actFacts)
 EndFunction
 
-;-1 = the installed AudioUtil predates that API level, 1 = available, 0 = not
-;probed yet (cached per instance, like audioUtilPauseAPI below)
-int audioUtilSiteAPI
-int audioUtilSnapshotAPI
-
-; One PPA reading for one line: [0] depth, [1] context bitmask, [2] her
-; penetration site (slots match AudioUtilPPA.GetSnapshot). Empty = no
-; measurement. One native on AudioUtil 0.9.22+ (API v10); assembled from the
-; scalar getters on older builds - depth and context have always existed, the
-; site needs API v9. Read once per line, never polled in a loop.
-float[] Function ReadPPA(Actor a)
-	if a == None || !AudioUtilPPA.IsConnected()
-		return PapyrusUtil.FloatArray(0)
-	endif
-	if audioUtilSnapshotAPI == 0
-		if AudioUtil.GetAPIVersion() >= 10
-			audioUtilSnapshotAPI = 1
-		else
-			audioUtilSnapshotAPI = -1
-		endif
-	endif
-	if audioUtilSnapshotAPI == 1
-		return AudioUtilPPA.GetSnapshot(a)
-	endif
-	if audioUtilSiteAPI == 0
-		if AudioUtil.GetAPIVersion() >= 9
-			audioUtilSiteAPI = 1
-		else
-			audioUtilSiteAPI = -1
-		endif
-	endif
-	float[] r = PapyrusUtil.FloatArray(3)
-	r[0] = AudioUtilPPA.GetDepth(a)
-	r[1] = AudioUtilPPA.GetContext(a) as float
-	if audioUtilSiteAPI == 1
-		r[2] = AudioUtilPPA.GetPenetrationSite(a) as float
-	endif
-	return r
-EndFunction
+;PPA readings live in SLOVE_PPA (shared with the PC voice engine - this used to
+;be a second copy of the same reader). Read once per line, never in a loop.
 
 ;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet
 int audioUtilPauseAPI

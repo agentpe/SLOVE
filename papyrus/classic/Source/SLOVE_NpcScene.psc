@@ -300,13 +300,11 @@ Function PlayAmbient(Actor a, bool intense, bool female = false)
 	if female
 		float[] snap = SLOVE_PPA.Read(a)
 		;her own measured depth beats the anchor-enjoyment guess (0 = knob off)
-		if npcdepthintense > 0.0 && snap.length > 0 && snap[0] > 0.0
-			intense = snap[0] >= npcdepthintense
+		float depth = SLOVE_PPA.DepthOf(snap)
+		if npcdepthintense > 0.0 && depth > 0.0
+			intense = depth >= npcdepthintense
 		endif
-		int site = 0
-		if snap.length > 2
-			site = snap[2] as int
-		endif
+		int site = SLOVE_PPA.SiteOf(snap)
 		if site == 1
 			;a penis in HER mouth - muffled sucking, not open moans
 			cat = "BlowjobActionSoft"

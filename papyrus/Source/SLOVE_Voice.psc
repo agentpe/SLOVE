@@ -3412,13 +3412,15 @@ Bool function HasSchlong(Actor char)
 	if (schlongfaction)
 		return char.isinfaction(schlongfaction)
 	elseif (TNG_Gentlewoman)
-		if SexLab.GetGender(char) == 1 && !char.HasKeyword(TNG_Gentlewoman)
+		;GetSexTier, not GetGender: P+ reports a futa as female here, so the
+		;gender test would drop a schlonged futa out of male detection entirely
+		if MasterScript.GetSexTier(char) == 1 && !char.HasKeyword(TNG_Gentlewoman)
 			return false ; Female
 		else
 			return true ; Male or Futa
 		endif
 	else
-		return SexLab.GetGender(char) == 0
+		return MasterScript.GetSexTier(char) == 0
 	endif
 endfunction
 

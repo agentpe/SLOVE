@@ -267,7 +267,7 @@ Function PerformInitialization()
 	playerref = game.getplayer() ;player
 
 	;Modules (SLO VE: both spells live in our own plugin)
-	if Game.GetModbyName("SLOVE.esp") != 255
+	if SLOVE_Utils.isDependencyReady("SLOVE.esp")
 		ExpressionsSpell = Game.GetFormFromFile(0x800, "SLOVE.esp") as Spell
 		VoiceSpell = Game.GetFormFromFile(0x802, "SLOVE.esp") as Spell
 		SFXSpell = Game.GetFormFromFile(0x805, "SLOVE.esp") as Spell
@@ -287,12 +287,12 @@ Function PerformInitialization()
 		SLOVE_Utils.WritetoErrorlogs("Director", "SFX Spell is Missing! Make Sure the Mod is properly installed and Plugin Enabled")
 	endif
 
-	if Game.GetModbyName("devious devices - assets.esm") != 255
+	if SLOVE_Utils.isDependencyReady("devious devices - assets.esm")
 		zad_DeviousGag = Game.GetFormFromFile(0x7EB8, "devious devices - assets.esm") as Keyword
 	endif
 
 	;Others
-	if Game.GetModbyName("Schlongs of Skyrim.esp") != 255
+	if SLOVE_Utils.isDependencyReady("Schlongs of Skyrim.esp")
 		schlongfaction = Game.GetFormFromFile(0xAFF8 , "Schlongs of Skyrim.esp") as Faction
 	EndIf
 
@@ -426,7 +426,7 @@ Function InitializeDirectorConfigs()
 	;[milk] - Oninus Lactis NG nipple squirts (optional; off unless the mod is
 	;present AND milk.enable = 1). MME is a further optional layer inside Lactate().
 	milkenable = SLOVE_Config.GetInt("milk.enable", 0)
-	if milkenable == 1 && Game.GetModbyName("OninusLactis.esp") != 255
+	if milkenable == 1 && SLOVE_Utils.isDependencyReady("OninusLactis.esp")
 		if LactisQuest == none
 			LactisQuest = Game.GetFormFromFile(0xD61, "OninusLactis.esp") as Quest
 		endif
@@ -803,7 +803,7 @@ endfunction
 ;the periodic penetration roll in OnUpdate above.
 
 Bool Function HasMME()
-	return Game.GetModbyName("MilkModNEW.esp") != 255
+	return SLOVE_Utils.isDependencyReady("MilkModNEW.esp")
 endfunction
 
 Bool Function CanLactate()
@@ -2062,6 +2062,14 @@ EndFunction
 
 int Function GetGender(actor char)
 	return sexlab.GetGender(char)
+EndFunction
+
+;The actor's SEX TIER, where the two frameworks disagree: P+ has a futa tier
+;(Male 0 / Female 1 / Futa 2) that classic lacks, and P+'s GetGender reports a
+;base-female futa as 1. Consumers asking "is this a plain female" must go
+;through here or they misread a futa on P+ (HasSchlong's TNG branch did).
+int Function GetSexTier(actor char)
+	return sexlab.GetSex(char)
 EndFunction
 
 int Function GetThreadID()

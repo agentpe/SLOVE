@@ -22,13 +22,13 @@ annotation-scheme-specific).
 | `SLOVE_Orgasm` | sender = orgasming Actor, numArg = thread id |
 | `SLOVE_SceneEnd` | strArg = thread id |
 
-Third-party events consumed raw (framework-independent): `_SLS_AhegaoStateChange` — by
+Third-party events consumed raw (framework-independent): `_SLS_AhegaoStateChange` - by
 `SLOVE_Expressions` (pause face writes) and by `SLOVE_Director` (set the
 `SLOVE_FaceOwnsMouth_SLS` marker on the player so `PlaySound` plays PC moans with
 `blockLipSync=true` and they don't drive the mouth over the SLS face; re-seeded from the
 `_SLS_IsAhegaoing` StorageUtil key in `Maintenance()`). `PlaySound` blocks lipsync per line
-when `FaceOwnsMouth(actor)` — the union of the SLS marker and `SLOVE_Expressions`'
-`SLOVE_FaceOwnsMouth_Expr` marker — is set; AudioUtil has no standing per-actor block.
+when `FaceOwnsMouth(actor)` - the union of the SLS marker and `SLOVE_Expressions`'
+`SLOVE_FaceOwnsMouth_Expr` marker - is set; AudioUtil has no standing per-actor block.
 
 ## Director API consumed by SLOVE_Voice / SLOVE_Expressions / SLOVE_SFX
 
@@ -47,7 +47,7 @@ director replays it via `LoadSchlongAdjustment()` on stage change).
 
 Resistance state (written by `SLOVE_Resistance` into StorageUtil, read back
 through the Director so consumers stay firewall-clean): `GetResistance(a)`,
-`IsBroken(a)` — both gated on `resistance.enable`, consumed by
+`IsBroken(a)` - both gated on `resistance.enable`, consumed by
 `SLOVE_Voice.ASLIsBroken()` and `SLOVE_Expressions.IsBroken()`.
 
 Known leaks (documented, acceptable): `SLOVE_Hentairim_Tags.HasASLTag` calls
@@ -55,20 +55,23 @@ Known leaks (documented, acceptable): `SLOVE_Hentairim_Tags.HasASLTag` calls
 `SexlabRegistry.GetAllStages` (director-internal). Pragmatic port leaks:
 `SLOVE_SFX` and `SLOVE_Resistance` still hold their own
 `SexLabThread` handle for high-frequency reads (positions, velocity, interaction
-flags/partners, stage tags, enjoyment) — an OStim backend must give their
+flags/partners, stage tags, enjoyment) - an OStim backend must give their
 director-equivalents the same data or these reads must move behind the director
 API first. `SLOVE_Resistance` additionally resolves the Director alias and the
 SexLab quest by FormID at runtime (no CK-filled properties).
 
-**`SLOVE_Voice` is UNIFIED** (0.6.20): its port leak is resolved — every SexLab
+**`SLOVE_Voice` is UNIFIED** (0.6.20): its port leak is resolved - every SexLab
 read goes through the director API, one source/one pex serves both variants
 from the FOMOD Core, and `papyrus\classic\Source` deliberately carries no copy.
 The unification added to both directors: `GetThreadID()`, `HasSubmissives()`,
 `GetPenisActionLabelAtPos(pos)` (the per-position label whose
 `SLOVE_Hentairim_Tags` signature is annotation-scheme-specific), and folded the
 classic SLSO `GetFullEnjoyment()` merge into the classic director's
-`GetEnjoyment` — it is framework truth, not voice policy, so every consumer of
-`GetEnjoyment` now gets the honest value. The build's `Assert-VariantTypes`
+`GetEnjoyment` - it is framework truth, not voice policy. NOTE this reaches only
+consumers that go THROUGH the director (Voice today): `SLOVE_Expressions` keeps
+its own SLSO merge and `SLOVE_NpcScene` / `SLOVE_Resistance` still read their own
+thread raw, so enjoyment stays 0 for them under the SLSO minigame. They cannot
+simply call the director - they run on NPC-scene threads it knows nothing about. The build's `Assert-VariantTypes`
 fails if a direct framework type ever reappears in the unified pex, or if a
 stale `SLOVE_Voice.pex` shows up in `dist-classic` (it would shadow the Core
 copy). `SLOVE_NpcScene` stays duplicated on purpose: it tracks NPC scenes on

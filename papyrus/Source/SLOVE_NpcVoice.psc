@@ -36,7 +36,7 @@ String[] Function Decide(String[] act, Bool intense, Int ctx, Bool victim, Bool 
 	endif
 	;not penetrated: a foreplay act she is giving (spoken, chance-gated) ...
 	String[] foreplay = TryForeplay(act, ctx, commentChance)
-	if foreplay.length > 0
+	if foreplay[0] != ""
 		return foreplay
 	endif
 	;... else the breathing floor; the lead's mouth on her is arousing whatever
@@ -83,7 +83,8 @@ EndFunction
 ;foreplay tone. All spoken comment folders, so each sits behind the comment
 ;roll; an empty result = nothing fits or the roll failed, and Decide falls to
 ;breathing. The act's dir gate matters: rcv/hand is her being fingered, not
-;her giving a handjob - only giv routes to the giver's lines.
+;her giving a handjob - only giv routes to the giver's lines. Returns a pick
+;whose [0] is "" when nothing fits - never a None array.
 String[] Function TryForeplay(String[] act, Int ctx, Float commentChance) Global
 	if Math.LogicalAnd(ctx, 16) == 16 && Roll(commentChance)
 		return Pick("Satisfied", "Foreplay Femdom Comments")
@@ -97,8 +98,10 @@ String[] Function TryForeplay(String[] act, Int ctx, Float commentChance) Global
 	if ((act[0] == "giv" && act[1] == "feet") || Math.LogicalAnd(ctx, 512) == 512) && Roll(commentChance)
 		return Pick("MadeMeCumSoMuch", "Foreplay FootJob Comments")
 	endif
-	String[] empty
-	return empty
+	;nothing fits, or every roll failed: an empty A-name is the sentinel. A
+	;declared-but-unassigned array is None, and reading .length on it is a VM
+	;error - on the COMMON path, since most beats fail the comment roll.
+	return Pick("", "")
 EndFunction
 
 String[] Function Pick(String aName, String bFolder) Global

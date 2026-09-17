@@ -5,12 +5,19 @@ Scriptname SLOVE_Utils Hidden
  a per-instance cache or a config knob (printdebug, the hot API probes) stays
  in its script.}
 
-;True when the plugin is in the load order. PO3's IsPluginFound (the
-;implementation the Directors always used) rather than Game.GetModByName,
-;which silently fails for ESL-flagged plugins - the Voice/Resistance copies
-;carried that trap.
+;True when the plugin is in the load order.
+;
+;Game.GetModByName, NOT PO3's IsPluginFound: this is the dependency-free
+;probe, and it handles light plugins fine (it returns the FE container index
+;for them, never 255). SLO VE proves it - SLOVE.esp is itself ESL-flagged and
+;the Director gates every one of its spells on this exact call. An earlier
+;version of this comment claimed GetModByName "silently fails for ESL-flagged
+;plugins"; that was wrong, and routing SLSO/SLS detection through PO3 on the
+;strength of it added an undocumented hard dependency to paths that never had
+;one. 255 and -1 both mean not found across SKSE versions.
 Bool Function isDependencyReady(String modname) Global
-	return PO3_SKSEFunctions.IsPluginFound(modname)
+	int index = Game.GetModByName(modname)
+	return index != 255 && index != -1
 EndFunction
 
 ;Error-level line into the SLOVE user log (SLOVE.0.log)

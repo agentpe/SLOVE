@@ -276,15 +276,15 @@ Function PerformInitialization()
 	endif
 
 	if !ExpressionsSpell
-		WritetoErrorlogs("Director", "Expressions Spell is Missing! Make Sure the Mod is properly installed and Plugin Enabled")
+		SLOVE_Utils.WritetoErrorlogs("Director", "Expressions Spell is Missing! Make Sure the Mod is properly installed and Plugin Enabled")
 	endif
 
 	if !VoiceSpell
-		WritetoErrorlogs("Director", "Voice Spell is Missing! Make Sure the Mod is properly installed and Plugin Enabled")
+		SLOVE_Utils.WritetoErrorlogs("Director", "Voice Spell is Missing! Make Sure the Mod is properly installed and Plugin Enabled")
 	endif
 
 	if !SFXSpell
-		WritetoErrorlogs("Director", "SFX Spell is Missing! Make Sure the Mod is properly installed and Plugin Enabled")
+		SLOVE_Utils.WritetoErrorlogs("Director", "SFX Spell is Missing! Make Sure the Mod is properly installed and Plugin Enabled")
 	endif
 
 	if Game.GetModbyName("devious devices - assets.esm") != 255
@@ -296,7 +296,7 @@ Function PerformInitialization()
 		schlongfaction = Game.GetFormFromFile(0xAFF8 , "Schlongs of Skyrim.esp") as Faction
 	EndIf
 
-	if isDependencyReady("TheNewGentleman.esp")
+	if SLOVE_Utils.isDependencyReady("TheNewGentleman.esp")
 		TNG_Gentlewoman = Game.GetFormFromFile(0xFF8, "TheNewGentleman.esp") as Keyword
 	endif
 EndFunction
@@ -383,7 +383,7 @@ Function InitializeDirectorConfigs()
 	if !SLOVE_Config.Available() && !WarnedConfigMissing
 		;SLO VE: one warning per session, then run on defaults (fail-open getters)
 		WarnedConfigMissing = true
-		WritetoErrorlogs("Director", "TomlUtil API not found - SLOVE.toml cannot be read, running on defaults. Check the AudioUtil/TomlUtil installation.")
+		SLOVE_Utils.WritetoErrorlogs("Director", "TomlUtil API not found - SLOVE.toml cannot be read, running on defaults. Check the AudioUtil/TomlUtil installation.")
 	endif
 
 	enablevoice = SLOVE_Config.GetInt("director.enablevoice", 1)
@@ -431,7 +431,7 @@ Function InitializeDirectorConfigs()
 			LactisQuest = Game.GetFormFromFile(0xD61, "OninusLactis.esp") as Quest
 		endif
 		if LactisQuest == none
-			WritetoErrorlogs("Director", "OninusLactis.esp loaded but quest 0xD61 not found - milk disabled. Reinstall Oninus Lactis NG.")
+			SLOVE_Utils.WritetoErrorlogs("Director", "OninusLactis.esp loaded but quest 0xD61 not found - milk disabled. Reinstall Oninus Lactis NG.")
 			milkenable = 0
 		endif
 	else
@@ -853,7 +853,7 @@ Function Lactate(Bool IsIntense)
 
 	OninusLactis squirtScript = LactisQuest as OninusLactis
 	if squirtScript == none
-		WritetoErrorlogs("Director", "OninusLactis quest script missing - reinstall Oninus Lactis NG")
+		SLOVE_Utils.WritetoErrorlogs("Director", "OninusLactis quest script missing - reinstall Oninus Lactis NG")
 		return
 	endif
 	printdebug("Milk: nipple squirt time=" + lactatetime + "s level=" + lactatelevel + " intense=" + IsIntense)
@@ -1333,10 +1333,6 @@ function printdebug(string contents = "")
 	if enableprintdebug == 1
 		SLOVE_Log.WriteLog("SLO VE Director : "+ contents, 0)
 	endif
-endfunction
-
-function WritetoErrorlogs(string Header = "Not Specified" ,String contents = "")
-	SLOVE_Log.WriteLog(Header + " : " + contents, 2)
 endfunction
 
 ;---------------------------Label Engine START------------------------
@@ -1882,10 +1878,6 @@ EndFunction
 
 Bool Function ScenehasCreatures()
 	return sexlab.CountCreatures(actorList) > 0
-endfunction
-
-Bool function isDependencyReady(String modname)
-	return PO3_SKSEFunctions.IsPluginFound(modname)
 endfunction
 
 Bool function IshugePP(actor char)

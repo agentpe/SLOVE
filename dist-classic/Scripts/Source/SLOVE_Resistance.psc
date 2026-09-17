@@ -449,13 +449,13 @@ bool Function IsHugePPPartner()
 	;guard the lookup like the TNG branch below: GetFormFromFile on an absent plugin
 	;errors in the Papyrus log on every call, and SOS's .esp is missing on any install
 	;running TNG (or SOS Core.esm alone) - the TNG keyword branch covers those
-	if isDependencyReady("Schlongs of Skyrim.esp")
+	if SLOVE_Utils.isDependencyReady("Schlongs of Skyrim.esp")
 		Faction sos = Game.GetFormFromFile(0xAFF8, "Schlongs of Skyrim.esp") as Faction
 		if sos
 			return partner.GetFactionRank(sos) >= soshugeppsize
 		endif
 	endif
-	if isDependencyReady("TheNewGentleman.esp")
+	if SLOVE_Utils.isDependencyReady("TheNewGentleman.esp")
 		Keyword tngXL = Game.GetFormFromFile(0xFE5, "TheNewGentleman.esp") as Keyword
 		if partner.HasKeyword(tngXL)
 			return true
@@ -469,11 +469,6 @@ Function RemoveResistanceSpell()
 	if rs
 		Actorref.RemoveSpell(rs)
 	endif
-EndFunction
-
-bool Function isDependencyReady(String modname)
-	int index = Game.GetModByName(modname)
-	return index != 255 && index != -1
 EndFunction
 
 Function printdebug(string contents = "")

@@ -215,7 +215,7 @@ Function PerformInitialization()
 	;never resets enjoyment). Always enable the orgasm now; warn if a config still
 	;sets the flag so its owner knows it is a no-op.
 	if hypebeforeorgasm == 1
-		WritetoErrorlogs("SLOVE", "voice.hypebeforeorgasm is deprecated and ignored - it froze SLSO's orgasm at 100%. Set it to 0 in SLOVE.toml to silence this warning.")
+		SLOVE_Utils.WritetoErrorlogs("SLOVE", "voice.hypebeforeorgasm is deprecated and ignored - it froze SLSO's orgasm at 100%. Set it to 0 in SLOVE.toml to silence this warning.")
 	endif
 
 	;set volume
@@ -256,16 +256,16 @@ Function PerformInitialization()
 
 
 	;TNG (only the Gentlewoman keyword - hasSchlong futa check)
-	if isDependencyReady("TheNewGentleman.esp") && !TNG_Gentlewoman
+	if SLOVE_Utils.isDependencyReady("TheNewGentleman.esp") && !TNG_Gentlewoman
 		TNG_Gentlewoman = Game.GetFormFromFile(0xFF8, "TheNewGentleman.esp") as Keyword
 	endif
 
 	;Set Schlong Faction
-	if isDependencyReady("Schlongs of Skyrim.esp")
+	if SLOVE_Utils.isDependencyReady("Schlongs of Skyrim.esp")
 		schlongfaction = Game.GetFormFromFile(0xAFF8 , "Schlongs of Skyrim.esp") as Faction
 
 		if !schlongfaction
-			WritetoErrorlogs("SLOVE" , "Schlong Faction Not Found. Ensure Mod is Properly Installed and Schlongs of Skyrim.esp Plugin Enabled")
+			SLOVE_Utils.WritetoErrorlogs("SLOVE" , "Schlong Faction Not Found. Ensure Mod is Properly Installed and Schlongs of Skyrim.esp Plugin Enabled")
 		endif
 	endif
 	;SLO VE: dropped - HentairimResistance faction resolution (resistance module is not part of SLO VE)
@@ -380,7 +380,7 @@ Function FindActorsAndVoices()
 	; Variation-B pack in F1 (e.g. Aika) drives the B dispatch while A packs stay on
 	; the collapsed set. The slot's variation field is the SOLE source of truth - a B
 	; pack must declare variation = "B" on its slot (see the SLOVE_zpack_*.toml overlays).
-	VoiceVariation = DispatchVariation(AudioUtil.GetSlotVariation(AudioUtil.GetSlotForActor(mainFemaleActor)))
+	VoiceVariation = SLOVE_Utils.DispatchVariation(AudioUtil.GetSlotVariation(AudioUtil.GetSlotForActor(mainFemaleActor)))
 	printdebug("mainfemaleactor :" + mainFemaleActor.getleveledactorbase().GetName())
 	printdebug("mainfemaleactor Voice Variation:" + VoiceVariation)
 	printdebug("mainmaleactor :" + mainMaleActor.getleveledactorbase().GetName())
@@ -790,7 +790,7 @@ Event OnUpdate()
 	;line already playing rings out - cutting a moan mid-word is worse than letting
 	;it finish - but nothing new starts until the menu closes, so the voice stops
 	;walking ahead of an animation that isn't moving.
-	if GamePaused()
+	if SLOVE_Utils.GamePaused()
 		RegisterForSingleUpdate(0.5)
 		return
 	endif
@@ -1503,33 +1503,12 @@ EndFunction
 
 
 ;--------------------------- menu freeze ------------------------------------
-;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet
-int audioUtilPauseAPI
-
-;True while a menu has the scene frozen. SKSE Menu Framework (and other ImGui
-;overlay menus) freeze the game by setting Main::freezeTime WITHOUT entering
-;menu mode, so the Papyrus VM keeps ticking right through it: Utility.Wait,
-;RegisterForSingleUpdate and even Utility.IsInMenuMode() all see a running game,
-;and this engine walked on to the next line over a frozen animation. AudioUtil
-;reads the freeze flag natively (API v7) and also reports real menu-mode pauses.
-;Older AudioUtil: probed once, then this is always false = the previous behavior.
-bool Function GamePaused()
-	if audioUtilPauseAPI == 0
-		if AudioUtil.GetAPIVersion() >= 7
-			audioUtilPauseAPI = 1
-		else
-			audioUtilPauseAPI = -1
-		endif
-	endif
-	return audioUtilPauseAPI == 1 && AudioUtil.IsGamePaused()
-EndFunction
-
 Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 0, Bool waitForCompletion = True , string debugtext = "None" , Bool SkipWait = false , Actor voiceActor = None , Bool forceFemaleVoice = false , String extraFacts = "" , String actDir = "" , String actPlace = "")
 
 	String soundToPlay = thesound
 
 	If soundToPlay == ""
-		WritetoErrorlogs("SLOVE","Sound Name :" + debugtext + " is None")
+		SLOVE_Utils.WritetoErrorlogs("SLOVE","Sound Name :" + debugtext + " is None")
 		Return
 	EndIf
 
@@ -1581,7 +1560,7 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 	;B-folder audio when HER slot is Variation B - the inner check validates the slot.
 	if (VoiceVariation == "B" || audioActor != playerCharacter) && debugtext != "None" && debugtext != soundToPlay
 		String vbSlot = AudioUtil.GetSlotForActor(audioActor)
-		if vbSlot != "" && DispatchVariation(AudioUtil.GetSlotVariation(vbSlot)) == "B" && AudioUtil.CategoryExists(vbSlot, debugtext)
+		if vbSlot != "" && SLOVE_Utils.DispatchVariation(AudioUtil.GetSlotVariation(vbSlot)) == "B" && AudioUtil.CategoryExists(vbSlot, debugtext)
 			soundToPlay = debugtext
 		endif
 	endif
@@ -1612,7 +1591,7 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 	;same hold as the OnUpdate gate, for the lines that don't come from it: the
 	;orgasm-reaction threads, the male/female/creature ambience cadences, and any
 	;call whose own wait spanned the menu opening.
-	If GamePaused()
+	If SLOVE_Utils.GamePaused()
 		Printdebug("Voice line skipped (game frozen behind a menu) : " + debugtext)
 		Return
 	EndIf
@@ -1671,7 +1650,7 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 		endif
 
 		;re-check: the scene may have ended - or a menu frozen it - during the pre-delay wait
-		if !TrackerRemoved && !GamePaused()
+		if !TrackerRemoved && !SLOVE_Utils.GamePaused()
 			String pcGroup = "pc_low"
 			if soundPriority >= 3
 				pcGroup = "pc_orgasm"     ;climax cries ride their own volume bus (voice.orgasmvolume)
@@ -3590,18 +3569,6 @@ Bool Function IsGettingSuckedoff()
 	return PenisActionLabel == "SMF" ||  PenisActionLabel == "FMF"
 endfunction
 
-;A slot marked variation "D" is a Variation-B pack whose author also uses tags:
-;identical folder names, identical dispatch. The marker exists so an author can
-;say "this pack is tag-shaped" and so tooling can tell the two apart - it must
-;never change routing, or every folder in the pack goes unread. Papyrus string
-;comparison is case-insensitive, so "d" works too.
-String Function DispatchVariation(String a_variation)
-	if a_variation == "D"
-		return "B"
-	endif
-	return a_variation
-EndFunction
-
 ;--- the RECEIVING side of PenisActionLabel ------------------------------------
 ;The lead's own equipment being serviced, as opposed to the IsGiving*/IsSucking*
 ;predicates above. Label only: nothing checks that the lead HAS anything, so the
@@ -3883,25 +3850,12 @@ Bool Function IsfinalStage()
 endfunction
 
 
-Bool function isDependencyReady(String modname)
-	int index = Game.GetModByName(modname)
-	if index == 255 || index == -1
-		return false
-	else
-		return true
-	endif
-endfunction
-
 
 bool function isFemaleOrgasming()
 	return StorageUtil.Getintvalue(MainFemaleActor ,"Orgasming", 0) == 1
 Endfunction
 
 
-
-function WritetoErrorlogs(string Header = "Not Specified" ,String contents = "")
-	SLOVE_Log.WriteLog(Header + " : " + contents, 2)
-endfunction
 
 ;SLO VE: GetLegacyStageNum/GetLegacyStagesCount moved behind the Director
 ;(GetStageNum/GetStagesCount) in the variant unification - they were the last

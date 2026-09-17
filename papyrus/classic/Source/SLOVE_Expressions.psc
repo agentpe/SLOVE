@@ -1866,7 +1866,3 @@ Function PrintDebug(string Contents = "")
 endfunction
 
 
-;-----------------------Hentairim Common Utilities END--------------------------------------
-function WritetoErrorlogs(string Header = "Not Specified" ,String contents = "")
-	SLOVE_Log.WriteLog(Header + " : " + contents, 2)
-endfunction

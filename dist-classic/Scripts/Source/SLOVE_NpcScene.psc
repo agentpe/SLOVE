@@ -174,7 +174,7 @@ Event NpcSceneOrgasm(Form actorRef, Int thread)
 		return
 	endif
 	;same hold as OnUpdate - this one is event-driven, so it needs its own gate
-	if GamePaused()
+	if SLOVE_Utils.GamePaused()
 		return
 	endif
 	MasterScript.PlaySound("Orgasm", a, False, "npc_high", "slove_np" + a.GetFormID(), SceneFacts(SceneIsIntense(), "mine"))
@@ -189,7 +189,7 @@ Event OnUpdate()
 	;same hold as the PC engine's OnUpdate: a menu that freezes the scene must not
 	;let ambient voice keep walking over an animation that isn't moving. Lines
 	;already playing ring out; nothing new starts until the menu closes.
-	if enablevoice == 1 && !GamePaused()
+	if enablevoice == 1 && !SLOVE_Utils.GamePaused()
 		bool intense = SceneIsIntense()
 		PlayMaleMoaning(intense)
 		PlayFemaleNPCComments(intense)
@@ -337,26 +337,6 @@ EndFunction
 
 ;PPA readings live in SLOVE_PPA (shared with the PC voice engine - this used to
 ;be a second copy of the same reader). Read once per line, never in a loop.
-
-;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet
-int audioUtilPauseAPI
-
-;True while a menu has the scene frozen. SKSE Menu Framework and other ImGui
-;overlays freeze the game WITHOUT entering menu mode, so the Papyrus VM keeps
-;ticking and Utility.IsInMenuMode() sees a running game; AudioUtil reads the
-;engine's freeze flag natively (API v7). Older AudioUtil: always false = the
-;previous behavior. Cached per instance - this is a magic-effect script, rebuilt
-;for every scene, so the probe is never carried across an AudioUtil upgrade.
-bool Function GamePaused()
-	if audioUtilPauseAPI == 0
-		if AudioUtil.GetAPIVersion() >= 7
-			audioUtilPauseAPI = 1
-		else
-			audioUtilPauseAPI = -1
-		endif
-	endif
-	return audioUtilPauseAPI == 1 && AudioUtil.IsGamePaused()
-EndFunction
 
 Function RemoveSelf()
 	Spell s = Game.GetFormFromFile(0x81E, "SLOVE.esp") as Spell

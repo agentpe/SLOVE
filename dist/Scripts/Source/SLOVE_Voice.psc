@@ -84,7 +84,7 @@ bool ASLpreviouslyintense = False
 bool commentedcumlocation = false
 bool commentedorgasmremark = false
 Bool ASLCurrentlyintense = false
-Bool ASLTagIntense = false     ;authored-tag/label intensity baseline; enjoyment overlays it (see AudioUtilUpdate)
+Bool ASLTagIntense = false     ;authored-tag/label intensity baseline; enjoyment overlays it (see SyncStageState)
 Bool intenseFromBarOnly = false ;voice.intense_from_bar_only - drop the authored-tag path, gate intensity on the enjoyment bar alone (SLSO-style)
 int intenseenjoyment           ;PC enjoyment at/above which the voice goes intense (0 = off; on classic the Director's GetEnjoyment folds in the SLSO meter)
 
@@ -581,14 +581,14 @@ EndFunction
 
 Function RegisterForTheEventsWeNeed()
 
-	RegisterForModEvent("AnimationEnd", "AudioUtilSceneEnd")
+	RegisterForModEvent("AnimationEnd", "OnSceneEnd")
 
-	RegisterForModEvent("SexLabOrgasmSeparate", "AudioUtilOnOrgasm")
+	RegisterForModEvent("SexLabOrgasmSeparate", "OnActorOrgasm")
 
 EndFunction
 
 
-Event AudioUtilSceneEnd(string eventName, string argString, float argNum, form sender);
+Event OnSceneEnd(string eventName, string argString, float argNum, form sender);
 	If argString as Int != ThreadID ;If true, this isn't our scene that just ended but another scene. So, ignore it.
 		Return
 	EndIf
@@ -602,7 +602,7 @@ Function ASLEndScene()	;manually end scene
 
 endfunction
 
-Event AudioUtilOnOrgasm(Form actorRef, Int thread)
+Event OnActorOrgasm(Form actorRef, Int thread)
 
 	If thread != ThreadID  || actorWithSceneTrackerSpell != mainFemaleActor
 		printdebug("Exiting early: Thread mismatch, wrong actor, or orgasm cooldown active.")
@@ -849,7 +849,7 @@ Event OnUpdate()
 				printdebug("Waiting for Director to Advance")
 			endwhile
 		endif
-		AudioUtilUpdate()
+		SyncStageState()
 
 		;=========================run Dirty Talk & sex Effects=======================
 		nextUpdateInterval = 0.1
@@ -956,7 +956,7 @@ EndEvent
 bool TrackerRemoved = false
 Function RemoveTracker()
 
-	if TrackerRemoved ;re-entry guard: AudioUtilSceneEnd and the OnUpdate end-check can both call this
+	if TrackerRemoved ;re-entry guard: OnSceneEnd and the OnUpdate end-check can both call this
 		return
 	endif
 	TrackerRemoved = true
@@ -1834,7 +1834,7 @@ Bool Function MaleIsVictim()
 	return MasterScript.IsSubmissive(mainMaleActor) && EnableVictimScenario == 1
 EndFunction
 
-Function AudioUtilUpdate()
+Function SyncStageState()
 
 	bool StageTransitioning = false
 

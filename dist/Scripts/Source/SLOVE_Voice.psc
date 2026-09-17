@@ -833,18 +833,10 @@ Event OnUpdate()
 			EndWhile
 		endif
 
-		printdebug("Director Advance Stage :" + StorageUtil.GetIntValue(None, "DirectorAdvanceStage", 0))
-		;usually this engine is the slowest to be ready. dont do anything until advancing, unless someone really wants to cum first as set in config
-		if ReacttoFemaleOrgasmNext || ReacttoPartnerOrgasmNext || SomeoneNeedstoOrgasm || StorageUtil.GetIntValue(None, "DirectorAdvanceStage", 0) == 0
-			;reactions pending or the stage isn't advancing yet - hold this cycle
-		elseif StorageUtil.GetIntValue(None, "DirectorAdvanceStage", 0) == 1
-			printdebug("lets Director Advance.")
-			;wait for director to update before Continue
-			while DirectorLastLabelTime == MasterScript.GetDirectorLastLabelTime() && MasterScript.GetDirectorLastLabelTime() != 0 && !SLOVE_Utils.IsHandlingMaleOrgasm(MainFemaleActor) && !SLOVE_Utils.IsOrgasming(MainFemaleActor)
-				utility.wait(0.3)
-				printdebug("Waiting for Director to Advance")
-			endwhile
-		endif
+		;SLO VE: dropped - Hentairim's "DirectorAdvanceStage" StorageUtil gate. Its
+		;director wrote that key to pace stage advances; SLO VE's never has, so the
+		;read was always 0, the hold branch was empty and the wait loop unreachable
+		;(field logs confirm: "Director Advance Stage :0" every tick).
 		SyncStageState()
 
 		;=========================run Dirty Talk & sex Effects=======================

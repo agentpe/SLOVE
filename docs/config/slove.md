@@ -88,7 +88,9 @@ Raise these for a chattier scene, lower them for mostly-moaning. `moanonly = 1` 
 |---|---|---|
 | `enablemalevoice` | `1` | Males speak at all. |
 | `chanceformaletocomment` | `20` | Percent chance a male line fires when his turn comes up. |
-| `voiceallactors` | `1` | `1` = **every** male in the scene speaks, rotating; `0` = lead male only. |
+| `voiceallactors` | `1` | `1` = **every** participant is voiced (male rotation + female NPC bystanders); `0` = only the PC and the lead partner. A **female** lead partner keeps her voice at `0` — she *is* the lead partner. |
+| `npcdepthintense` | `6.0` | With **Accurate Penetration**: an NPC's *own* measured penetration depth at/above this plays her intense pools instead of tracking the scene-wide (PC-driven) intensity. PPA's working range is roughly 2 (shallow) – 10 (deep). `0` = off. |
+| `npccommentchance` | `0.35` | `0–1`: fraction of NPC voice beats allowed to be full **spoken** lines (femdom / anal / DP / foreplay comments) rather than non-verbal sounds. A failed roll falls back to the grunt/breath, never silence. `0` = NPCs never speak, moans only. |
 | `creaturebreathing` | `1` | Creature partners pant/growl through the scene (the `Breathing` category on `C*` slots). |
 | `creaturebreathmininterval` | `5` | Seconds between creature breaths, minimum. **Halved on intense stages.** |
 | `creaturebreathmaxinterval` | `12` | …maximum. |

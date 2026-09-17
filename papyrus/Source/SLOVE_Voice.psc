@@ -29,6 +29,8 @@ Float lastPartnerFemaleLineTime    ;scene time the female PARTNER (mainMaleActor
 Float partnerFemaleLineCooldown    ;randomized pause between her lines (PlayFemalePartnerComments)
 Bool partnerIsVoicedFemale = false ;cached per scene: the partner role slot holds a voiced human female
 Bool sceneHasPenetrator = false    ;any male (PC included) or creature in the scene - the bystander no-PPA grunt gate
+Float npcdepthintense              ;voice.npcdepthintense: HER measured PPA depth at/above which her pools go intense (0 = off, scene flag only)
+Float npccommentchance             ;voice.npccommentchance: fraction of NPC beats allowed to be full SPOKEN lines rather than non-verbal sounds
 ;--- creature ambience: voiced creatures (C-slots via [race_map]) pant/growl on a cadence
 Actor[] sceneCreatures
 Float lastCreatureBreathTime
@@ -296,6 +298,11 @@ Function FindActorsAndVoices()
 	;stock moans, so the slot guard is defensive - a pooled NPC lands on her F2-F10
 	;pack, an unmapped one on stock, but never silent).
 	voiceAllActors = SLOVE_Config.GetInt("voice.voiceallactors", 1)
+	;PPA-side NPC tuning: depth threshold for HER intense pools (PPA's working
+	;range is roughly 2 shallow - 10 deep), and how often an NPC beat may be a
+	;spoken comment line instead of a non-verbal sound
+	npcdepthintense = SLOVE_Config.GetFloat("voice.npcdepthintense", 6.0)
+	npccommentchance = SLOVE_Config.GetFloat("voice.npccommentchance", 0.35)
 	sceneMales = PapyrusUtil.ActorArray(0)
 	sceneFemales = PapyrusUtil.ActorArray(0)
 	sceneCreatures = PapyrusUtil.ActorArray(0)
@@ -313,7 +320,7 @@ Function FindActorsAndVoices()
 			EndIf
 			sceneMales = PapyrusUtil.PushActor(sceneMales, actorInQuestion)
 		elseif Sexlab.GetGender(actorInQuestion) > 1
-			sceneHasPenetrator = true ;voiced or not - FemaleNpcIsPenetrated cares about anatomy, not slots
+			sceneHasPenetrator = true ;voiced or not - the composition rule cares about anatomy, not slots
 			if AudioUtil.GetSlotForActor(actorInQuestion) != ""
 				sceneCreatures = PapyrusUtil.PushActor(sceneCreatures, actorInQuestion)
 			endif
@@ -450,82 +457,156 @@ Function PlayFemaleNPCComments()
 	if speaker == None
 		return
 	endif
-	;debugtext carries the on-disk B-folder name so a Variation-B pack voices her own
-	;line (via the per-actor VarB remap in PlaySound); an A / stock slot ignores it
-	;and falls back to the camelCase soundToPlay. Folder names mirror the PC's own
-	;beats (PlayMoanonlyVarB grunts, the BreathySoft/BreathyIntense breathing filler).
-	if FemaleNpcIsPenetrated(speaker)
-		PlayFemaleNpcGrunt(speaker)
-	else
-		PlayFemaleNpcBreath(speaker)
-	endif
+	;one PPA reading + her act, shared by the beat and (by the same derivation)
+	;her fact string - the folder choice and the tags cannot disagree
+	float[] snap = ReadPPA(speaker)
+	String[] act = ResolveSpeakerAct(speaker, ppaSnap = snap)
+	PlayFemaleNpcBeat(speaker, act, snap)
 EndFunction
 
-;The penetrated-grunt beat for a female NPC, victim-partitioned. A coerced woman
-;grunts from the pack's Victim folders - the single biggest B-pack family an NPC
-;could never reach before. A-name/debugtext pairs are the ones the PC's own
-;PlayMoanonlyVarB uses for those exact folders, so an A/stock slot degrades the
-;same way hers does. Shared by the partner and the bystander chains.
-Function PlayFemaleNpcGrunt(Actor a)
-	if FemaleNpcIsVictim(a)
-		if ASLCurrentlyintense
+;=== the shared female-NPC beat ===
+;One dispatcher for any female NPC line - the partner and bystander chains both
+;land here once their pickers and cooldowns have spoken. `act` is HER side of
+;the act (ResolveSpeakerAct: the lead's labels inverted for the partner, PPA's
+;per-actor site/context where PPA can name it, empty when nothing measured);
+;`snap` is her PPA reading (ReadPPA). debugtext carries the on-disk B-folder
+;name so a Variation-B pack voices her own line (per-actor VarB remap in
+;PlaySound); an A / stock slot ignores it and resolves the camelCase A-name.
+Function PlayFemaleNpcBeat(Actor a, String[] act, float[] snap)
+	bool intense = NpcIntense(snap)
+	int ctx = PPACtxOf(snap)
+	if act[0] == "giv" && act[1] == "oral"
+		;her mouth is full - muffled action sounds, not open moans. Always a cock
+		;or a strapon: giv/oral only arises from the lead's PenisActionLabel or
+		;from HER site reading Mouth, and the label set has no "being licked"
+		;state, so there is no cunnilingus-giving case to route to Licking pools.
+		if intense
+			PlaySound("BlowjobActionIntense", a, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action Intense", forceFemaleVoice = true)
+		else
+			PlaySound("BlowjobActionSoft", a, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action", forceFemaleVoice = true)
+		endif
+		return
+	endif
+	if act[0] == "rcv" && (act[1] == "vaginal" || act[1] == "anal" || act[1] == "dp")
+		PlayFemaleNpcGrunt(a, intense, ctx, act[1])
+		return
+	endif
+	;unmeasured BYSTANDER in a scene with someone to do the penetrating: the
+	;composition rule (an MFF extra keeps her plausible grunts; an all-female
+	;scene falls through to breathing instead of grunting at nobody). The
+	;partner never needs this - her act already carries the labels' answer.
+	if act[0] == "" && !PPAHasSite(snap) && a != mainMaleActor && sceneHasPenetrator
+		PlayFemaleNpcGrunt(a, intense, ctx, "")
+		return
+	endif
+	;not penetrated: a foreplay act she is giving (spoken, chance-gated) ...
+	if TryFemaleNpcForeplay(a, act, ctx)
+		return
+	endif
+	;... else the breathing floor; the lead's mouth on her is arousing whatever
+	;the scene-wide beat says, so rcv/oral forces the intense pool
+	PlayFemaleNpcBreath(a, intense, act[0] == "rcv" && act[1] == "oral")
+EndFunction
+
+;The penetrated beat, partitioned by tone and hole. Victim first: SexLab's own
+;submissive flag OR PPA classifying HER interaction Aggressive - the Victim
+;folders were the single biggest B-pack family an NPC could never reach. Then
+;the femdom / DP / anal SPOKEN comments, each behind the comment-chance roll so
+;an NPC stays mostly non-verbal; a failed roll falls to the plain grunt, never
+;to silence. A-name/debugtext pairs are the ones the PC's own dispatch uses for
+;those exact folders, so an A/stock slot degrades the same way hers does.
+Function PlayFemaleNpcGrunt(Actor a, Bool intense, Int ctx, String place)
+	if FemaleNpcIsVictim(a, ctx)
+		if intense
 			PlaySound("CumTogetherTease", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Victim Intense", forceFemaleVoice = true)
 		else
 			PlaySound("Unamused", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Victim", forceFemaleVoice = true)
 		endif
-	elseif ASLCurrentlyintense
+		return
+	endif
+	if Math.LogicalAnd(ctx, 16) == 16 && CommentRoll()
+		;FemDom-classified and she is penetrated - the dominant woman riding
+		;(same folders the PC's femdom-penetrated beat uses)
+		if intense
+			PlaySound("SensitivePleasure", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Comments Femdom Intense", forceFemaleVoice = true)
+		else
+			PlaySound("PenetrativeCommentsIntense", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Comments Femdom", forceFemaleVoice = true)
+		endif
+		return
+	endif
+	if place == "dp" && CommentRoll()
+		PlaySound("TeaseAnal", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Double Comments", forceFemaleVoice = true)
+		return
+	endif
+	if place == "anal" && intense && CommentRoll()
+		;no soft-anal pair exists anywhere in the engine - soft anal stays a grunt
+		PlaySound("IntenseAnal", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Anal Comments Intense", forceFemaleVoice = true)
+		return
+	endif
+	if intense
 		PlaySound("NearOrgasmNoises", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt Intense", forceFemaleVoice = true)
 	else
 		PlaySound("PenetrativeGrunts", a, soundPriority = 1, waitForCompletion = False, debugtext = "Penetrated Grunt", forceFemaleVoice = true)
 	endif
 EndFunction
 
-;The act-neutral breathing floor. `heightened` forces the intense pool for a beat
-;that IS arousing regardless of the scene's soft/intense state - being serviced
-;orally, where flat breathing undersells what is happening to her.
-Function PlayFemaleNpcBreath(Actor a, Bool heightened = false)
-	if heightened || ASLCurrentlyintense
+;Foreplay acts she is GIVING - boob/hand/foot from her act (site- or
+;context-derived) or straight from PPA's classification bits, plus the femdom
+;foreplay tone. All spoken comment folders, so each sits behind the
+;comment-chance roll; false = nothing fits or the roll failed, and the caller
+;falls to breathing. The act's dir gate matters: rcv/hand is her being
+;fingered, not her giving a handjob - only giv routes to the giver's lines.
+Bool Function TryFemaleNpcForeplay(Actor a, String[] act, Int ctx)
+	if Math.LogicalAnd(ctx, 16) == 16 && CommentRoll()
+		PlaySound("Satisfied", a, soundPriority = 1, waitForCompletion = False, debugtext = "Foreplay Femdom Comments", forceFemaleVoice = true)
+		return true
+	endif
+	if ((act[0] == "giv" && act[1] == "chest") || Math.LogicalAnd(ctx, 128) == 128) && CommentRoll()
+		PlaySound("ForeplayIntense", a, soundPriority = 1, waitForCompletion = False, debugtext = "Foreplay BoobJob Comments", forceFemaleVoice = true)
+		return true
+	endif
+	if ((act[0] == "giv" && act[1] == "hand") || Math.LogicalAnd(ctx, 256) == 256) && CommentRoll()
+		PlaySound("ForeplaySoft", a, soundPriority = 1, waitForCompletion = False, debugtext = "Foreplay Handjob Comments", forceFemaleVoice = true)
+		return true
+	endif
+	if ((act[0] == "giv" && act[1] == "feet") || Math.LogicalAnd(ctx, 512) == 512) && CommentRoll()
+		PlaySound("MadeMeCumSoMuch", a, soundPriority = 1, waitForCompletion = False, debugtext = "Foreplay FootJob Comments", forceFemaleVoice = true)
+		return true
+	endif
+	return false
+EndFunction
+
+;One roll per spoken-beat candidate: voice.npccommentchance is the fraction of
+;NPC beats allowed to be full spoken lines rather than non-verbal sounds
+Bool Function CommentRoll()
+	return Utility.RandomFloat(0.0, 1.0) < npccommentchance
+EndFunction
+
+;The act-neutral breathing floor. `heightened` forces the intense pool for a
+;beat that IS arousing regardless of the measured/scene intensity - being
+;serviced orally, where flat breathing undersells what is happening to her.
+Function PlayFemaleNpcBreath(Actor a, Bool intense, Bool heightened = false)
+	if heightened || intense
 		PlaySound("BreathyIntense", a, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing Intense", forceFemaleVoice = true)
 	else
 		PlaySound("BreathySoft", a, soundPriority = 1, waitForCompletion = False, debugtext = "Breathing", forceFemaleVoice = true)
 	endif
 EndFunction
 
-;Is this female NPC the scene's submissive? Per-actor (SexLab's own flag), so it
-;answers for the partner and for a bystander alike - unlike MaleIsVictim(), which
-;can only ever ask about the partner role slot. Same EnableVictimScenario gate as
-;the lead's FemaleIsVictim(), so turning the victim scenario off turns this off too.
-Bool Function FemaleNpcIsVictim(Actor a)
+;Is this female NPC the scene's coerced party? Per-actor both ways: SexLab's
+;own submissive flag, or PPA classifying HER interaction Aggressive (ctx bit 8
+;- the same animation-tag tier the labels are, but per-receiver). Same
+;EnableVictimScenario gate as the lead's FemaleIsVictim(), so turning the
+;victim scenario off turns this off too. The ctx test runs first - it is
+;internal and saves the SexLab external when it already answers.
+Bool Function FemaleNpcIsVictim(Actor a, Int ctx = 0)
 	if a == None || EnableVictimScenario != 1
 		return false
 	endif
+	if Math.LogicalAnd(ctx, 8) == 8
+		return true
+	endif
 	return CurrentThread.GetSubmissive(a)
-EndFunction
-
-;Is this female NPC actually being penetrated right now? PPA measures per
-;RECEIVER, so it can answer for any actor, bystander included; site 0 means
-;"nothing measured", so fall through (the same rule PPAPlace follows), while a
-;real site elsewhere (mouth, a hand) rules penetration out. Without a PPA answer:
-;the labels speak for the lead's opposite number (if the LEAD is giving
-;penetration her partner is receiving it - see BuildFacts), and a BYSTANDER -
-;whom the labels never describe - grunts only when the scene has someone to do
-;the penetrating (a male, the PC included, or a creature): an MFF bystander keeps
-;her plausible grunts, an all-female scene stops grunting at nobody. Same
-;composition rule as SLOVE_NpcScene's FemaleIsPenetrated.
-Bool Function FemaleNpcIsPenetrated(Actor a)
-	if a == None
-		return false
-	endif
-	if PPASiteAvailable() && AudioUtilPPA.IsConnected()
-		int site = AudioUtilPPA.GetPenetrationSite(a)
-		if site != 0
-			return site == 2 || site == 3 || site == 4 ;Anus / Vagina / Both
-		endif
-	endif
-	if a == mainMaleActor
-		return IsGivingAnalPenetration() || IsGivingVaginalPenetration()
-	endif
-	return sceneHasPenetrator
 EndFunction
 
 ;Voice the lead's FEMALE partner - the woman filling the mainMaleActor role slot
@@ -533,9 +614,9 @@ EndFunction
 ;the orgasm recorder already treat her as the partner (orgasmerIsSecondaryFemale),
 ;and PickSpeakingFemale now leaves her to this chain - the female mirror of the
 ;voiced male partner's PlayMaleComments/PlayMaleMoaning. Her category comes from
-;HER side of the act (ResolveSpeakerAct - the same inverted derivation her facts
-;carry), so the folder and the tags agree instead of hardcoding "Penetrated
-;Grunt" onto a woman the facts call the giver. Deliberately NOT gated on
+;HER side of the act (ResolveSpeakerAct - the same derivation her facts carry),
+;so the folder and the tags agree instead of hardcoding "Penetrated Grunt" onto
+;a woman the facts call the giver. Deliberately NOT gated on
 ;voice.voiceallactors: 0 means "only the PC and the lead partner are voiced",
 ;and she IS the lead partner (the male partner's chain is likewise ungated).
 Function PlayFemalePartnerComments()
@@ -552,34 +633,16 @@ Function PlayFemalePartnerComments()
 	endif
 	lastPartnerFemaleLineTime = now
 	partnerFemaleLineCooldown = Utility.RandomFloat(6.0, 14.0)
-	;branch order mirrors the lead's own dispatch: mouth beats first (kissing, then
-	;a full mouth - "blowjob always first because muffled by cock"), then
-	;penetration, then neutral breathing as the floor
+	;kissing first, mirroring the lead's own dispatch order - the one symmetric
+	;act, where the label speaks for both mouths. Same A-name + B-folder pair as
+	;the lead's PlayKissingVarB. Everything else is the shared NPC beat.
 	if IsKissing() && !IsRimming()
-		;kissing is the one symmetric act - the label speaks for both mouths.
-		;Same A-name + B-folder pair as the lead's PlayKissingVarB.
 		PlaySound("MaleOrgasmReactionLover", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Kissing", forceFemaleVoice = true)
 		return
 	endif
-	;her side of the act - the same values her fact string will carry
-	String[] act = ResolveSpeakerAct(partner)
-	if act[0] == "giv" && act[1] == "oral"
-		;her mouth is on the lead - muffled action sounds, not open moans. This is
-		;always a cock or a strapon: the partner only reads giv/oral from the lead's
-		;PenisActionLabel (SMF/FMF), and the label set has no "lead is being licked"
-		;state, so there is no cunnilingus case to route to the Licking pools here.
-		if ASLCurrentlyintense
-			PlaySound("BlowjobActionIntense", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action Intense", forceFemaleVoice = true)
-		else
-			PlaySound("BlowjobActionSoft", partner, soundPriority = 1, waitForCompletion = False, debugtext = "Blowjob Action", forceFemaleVoice = true)
-		endif
-	elseif FemaleNpcIsPenetrated(partner)
-		PlayFemaleNpcGrunt(partner)
-	else
-		;rcv/oral = the LEAD's mouth is on HER (she is being sucked, licked or
-		;rimmed): heightened breathing, since the soft pool would undersell it
-		PlayFemaleNpcBreath(partner, act[0] == "rcv" && act[1] == "oral")
-	endif
+	float[] snap = ReadPPA(partner)
+	String[] act = ResolveSpeakerAct(partner, ppaSnap = snap)
+	PlayFemaleNpcBeat(partner, act, snap)
 EndFunction
 
 ;Voiced creatures pant/growl on their own randomized cadence (intense stages
@@ -1139,7 +1202,7 @@ EndFunction
 ;creature in a creature scene) and NOBODY else: a third speaker, e.g. a second
 ;female NPC crying out on her own, gets no act facts at all, because inverting
 ;the lead's direction would state something about her we never measured.
-String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String actPlace = "")
+String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String actPlace = "", float[] ppaSnap = None)
 	bool lead = (speaker == mainFemaleActor)
 	String dir = ""
 	String place = ""
@@ -1243,6 +1306,60 @@ String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String ac
 			endif
 		endif
 	endif
+	;PPA per-actor overlay for NON-LEAD speakers: their OWN reading outranks
+	;anything inferred from the lead's labels, because PPA is the only source
+	;that measures a third actor at all - which dissolves the "we never measured
+	;her" rule above whenever it is connected. Site first (the physical hint): a
+	;site names the hole on THIS actor, so Mouth means a penis in THEIR mouth -
+	;they are the one giving oral; these semantics hold for either sex. Then,
+	;with no site and no label act, PPA's classification bits (same tier as the
+	;labels, but per-receiver) can still name a foreplay act - that mapping IS
+	;gendered (a boob/hand/foot act is given by the woman, received by the man),
+	;so it only applies to a human female. Never against an explicit call-site
+	;act - the same rule PPAPlace states above. The lead is untouched: her act
+	;already runs through PPAPlace inside the label chain.
+	if !lead && actDir == "" && actPlace == ""
+		if ppaSnap == None
+			ppaSnap = ReadPPA(speaker)
+		endif
+		int ownSite = 0
+		if ppaSnap.length > 2
+			ownSite = ppaSnap[2] as int
+		endif
+		if ownSite == 1
+			dir = "giv" ;a penis in THEIR mouth - this speaker is the one giving oral
+			place = "oral"
+			imp = NpcImplementFor(speaker)
+		elseif ownSite == 2
+			dir = "rcv"
+			place = "anal"
+			imp = NpcImplementFor(speaker)
+		elseif ownSite == 3
+			dir = "rcv"
+			place = "vaginal"
+			imp = NpcImplementFor(speaker)
+		elseif ownSite == 4
+			dir = "rcv"
+			place = "dp"
+			imp = NpcImplementFor(speaker)
+		elseif ownSite >= 5 && ownSite <= 7
+			dir = "giv" ;their hands on a penis - a handjob, whoever gives it
+			place = "hand"
+			imp = NpcImplementFor(speaker)
+		elseif dir == "" && Sexlab.GetGender(speaker) == 1
+			int npcCtx = PPACtxOf(ppaSnap)
+			if Math.LogicalAnd(npcCtx, 128) == 128
+				dir = "giv"
+				place = "chest" ;nothing penetrates in these - no implement guess
+			elseif Math.LogicalAnd(npcCtx, 256) == 256
+				dir = "giv"
+				place = "hand"
+			elseif Math.LogicalAnd(npcCtx, 512) == 512
+				dir = "giv"
+				place = "feet"
+			endif
+		endif
+	endif
 	String[] act = new String[3]
 	act[0] = dir
 	act[1] = place
@@ -1322,6 +1439,77 @@ String Function PPAPlace(String labelPlace, String dir)
 	endif
 	;site 0 None: nothing measured, so the labels have it
 	return labelPlace
+EndFunction
+
+;AudioUtil 0.9.22 (API v10) returns the whole per-receiver PPA snapshot in one
+;native. Probed once and cached tri-state, like the site probe above.
+int audioUtilSnapshotAPI
+
+Bool Function PPASnapshotAvailable()
+	if audioUtilSnapshotAPI == 0
+		if AudioUtil.GetAPIVersion() >= 10
+			audioUtilSnapshotAPI = 1
+		else
+			audioUtilSnapshotAPI = -1
+		endif
+	endif
+	return audioUtilSnapshotAPI == 1
+EndFunction
+
+;One PPA reading for one line: [0] depth, [1] context bitmask, [2] her
+;penetration site (slots match AudioUtilPPA.GetSnapshot; the extra snapshot
+;slots ride along unused). Empty = no measurement. One native on AudioUtil
+;0.9.22+; assembled from the scalar getters on older builds - depth and context
+;have always existed, the site needs API v9. Read ONCE per line and passed
+;down; never poll this in a tight loop (PPA's author warns about VM lock
+;contention).
+float[] Function ReadPPA(Actor a)
+	if a == None || !AudioUtilPPA.IsConnected()
+		return PapyrusUtil.FloatArray(0)
+	endif
+	if PPASnapshotAvailable()
+		return AudioUtilPPA.GetSnapshot(a)
+	endif
+	float[] r = PapyrusUtil.FloatArray(3)
+	r[0] = AudioUtilPPA.GetDepth(a)
+	r[1] = AudioUtilPPA.GetContext(a) as float
+	if PPASiteAvailable()
+		r[2] = AudioUtilPPA.GetPenetrationSite(a) as float
+	endif
+	return r
+EndFunction
+
+;Her own measured depth picks the pool when PPA has a number; the scene-wide
+;flag (which tracks the PC's beat, not hers) is only the fallback. Depth is
+;PPA's one PHYSICAL signal - context and site are classification and hint tiers
+;- and its working range is roughly 2 (shallow) to 10 (deep), so the
+;voice.npcdepthintense default of 6 splits that range; 0 disables the overlay.
+Bool Function NpcIntense(float[] snap)
+	if npcdepthintense > 0.0 && snap.length > 0 && snap[0] > 0.0
+		return snap[0] >= npcdepthintense
+	endif
+	return ASLCurrentlyintense
+EndFunction
+
+Int Function PPACtxOf(float[] snap)
+	if snap.length > 1
+		return snap[1] as int
+	endif
+	return 0
+EndFunction
+
+Bool Function PPAHasSite(float[] snap)
+	return snap.length > 2 && (snap[2] as int) != 0
+EndFunction
+
+;What is on/in a female NPC, for the fact string: the partner's opposite number
+;is the LEAD, so her implement is the lead's; a bystander's penetrator is
+;unmeasured - PPA names the hole, never who is in it - so no guess.
+String Function NpcImplementFor(Actor speaker)
+	if speaker == mainMaleActor
+		return LeadImplement()
+	endif
+	return ""
 EndFunction
 
 ;partner-axis fact for the actor on the other side of a line: " man", " woman",

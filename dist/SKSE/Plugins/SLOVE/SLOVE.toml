@@ -80,7 +80,9 @@ intenseenjoyment = 50          # PC enjoyment at/above which voices go intense (
 intense_from_bar_only = 1      # 1 = SLSO-style (default): the enjoyment bar ALONE decides intense voices, so NearOrgasmNoises plays only at/above intenseenjoyment and for no other reason. 0 = also go intense on authored fast/intense animation tags (pre-0.6.3 behavior; useful if your enjoyment bar never climbs, e.g. no SLSO meter). Both P+ and classic. Voice only - facial expressions stay tag-driven.
 enablemalevoice = 1            # MASTER male switch: 0 disables ALL male audio (both dirty-talk and moaning)
 chanceformaletocomment = 30
-voiceallactors = 1             # secondary partners speak (male rotation + female NPCs); 0 = PC + lead male only
+voiceallactors = 1             # secondary partners speak (male rotation + female NPC bystanders); 0 = PC + lead partner only (a FEMALE lead partner keeps her voice - she IS the lead partner)
+npcdepthintense = 6.0          # with Accurate Penetration: an NPC's OWN measured depth at/above this plays her intense pools (PPA range ~2 shallow - 10 deep); 0 = off, scene-wide intensity only
+npccommentchance = 0.35        # 0-1: fraction of NPC beats allowed to be full SPOKEN lines (femdom/anal/DP/foreplay comments) instead of non-verbal sounds; 0 = NPCs never speak, moans only
 creaturebreathing = 1          # creature partners (C-slots) pant/growl during the scene
 creaturebreathmininterval = 3  # seconds between creature breaths (halved on intense stages)
 creaturebreathmaxinterval = 8

@@ -32,6 +32,7 @@ float creaturebreathmininterval
 float creaturebreathmaxinterval
 int intenseenjoyment
 float npcvolume
+float npcdepthintense ;voice.npcdepthintense: HER measured PPA depth for the intense pools (0 = off)
 int enableprintdebug
 
 float lastMaleMoanTime
@@ -101,6 +102,7 @@ Function InitializeConfig()
 	creaturebreathmininterval = SLOVE_Config.GetInt("voice.creaturebreathmininterval", 5) as float
 	creaturebreathmaxinterval = SLOVE_Config.GetInt("voice.creaturebreathmaxinterval", 12) as float
 	intenseenjoyment        = SLOVE_Config.GetInt("voice.femaleorgasmhypeenjoyment", 75)
+	npcdepthintense         = SLOVE_Config.GetFloat("voice.npcdepthintense", 6.0)
 	; dedicated NPC-scene voice volume (own audio bus), default = partnervolume so it
 	; matches the old behavior until set. 0-100 -> 0-1 for SetGroupVolume.
 	npcvolume               = SLOVE_Config.GetInt("voice.npcscenevolume", SLOVE_Config.GetInt("voice.partnervolume", 100)) as float / 100
@@ -197,11 +199,13 @@ Event OnUpdate()
 EndEvent
 
 ;Variation-D facts for an NPC-scene line. Only what an NPC scene actually knows:
-;the ambient intensity beat, plus "mine" on a climax cry. Deliberately no mood or
-;direction - this engine has no victim/femdom model and no per-actor act labels,
-;and a fact it cannot stand behind would route the line into a pool that means
-;something else. Facts it omits simply leave those pools unqualified, so a tagged
-;pack falls back to its untagged floor exactly as before.
+;the ambient intensity beat, plus "mine" on a climax cry. Deliberately no mood -
+;this engine has no victim/femdom model - and no LABEL-derived act facts either;
+;the one act source it trusts is PPA's per-receiver site, which PlayAmbient
+;appends itself when measured ("giv oral" / "rcv anal" / ...). A fact this
+;engine cannot stand behind would route the line into a pool that means
+;something else; facts it omits simply leave those pools unqualified, so a
+;tagged pack falls back to its untagged floor exactly as before.
 String Function SceneFacts(bool intense, String extraFacts = "")
 	if intense
 		return extraFacts + " intense"
@@ -282,38 +286,79 @@ EndFunction
 ; channel, FaceOwnsMouth handled). The actor's own slot resolves male vs female audio.
 ; Distance falloff for far NPC scenes is handled by AudioUtil ([general]
 ; voice_attenuation), not here.
-; For a FEMALE the grunt categories literally claim "penetrated", which this engine
-; cannot read off labels (it has none - see SceneFacts): she grunts only when
-; FemaleIsPenetrated says so, else she gets the breathing filler (BreathySoft /
-; BreathyIntense - the PC engine's act-neutral A-names, which stock F0 and packs
-; both resolve through the shipped fallback ladder). Males keep the grunt names:
-; on a male slot they ARE the generic moan categories (the PC engine's
-; PlayMaleMoaning requests the same two), not an act claim.
+; For a FEMALE the beat is act-aware wherever PPA measures HER: her own depth
+; picks soft vs intense (voice.npcdepthintense - the same knob as the PC
+; engine's NPC beats), her site picks the sound - a full mouth gets muffled
+; sucking instead of open moans, a named hole keeps the grunt and states its
+; place in the facts - and with no measurement the composition rule stands:
+; grunt only when the scene has a male/creature to do it, breathe in an
+; all-female scene. Males keep the grunt names: on a male slot they ARE the
+; generic moan categories (PlayMaleMoaning requests the same two).
 Function PlayAmbient(Actor a, bool intense, bool female = false)
 	string cat = "PenetrativeGrunts"
-	if intense
+	string actFacts = ""
+	if female
+		float[] snap = ReadPPA(a)
+		;her own measured depth beats the anchor-enjoyment guess (0 = knob off)
+		if npcdepthintense > 0.0 && snap.length > 0 && snap[0] > 0.0
+			intense = snap[0] >= npcdepthintense
+		endif
+		int site = 0
+		if snap.length > 2
+			site = snap[2] as int
+		endif
+		if site == 1
+			;a penis in HER mouth - muffled sucking, not open moans
+			cat = "BlowjobActionSoft"
+			if intense
+				cat = "BlowjobActionIntense"
+			endif
+			actFacts = " giv oral"
+		elseif site == 2
+			actFacts = " rcv anal"
+		elseif site == 3
+			actFacts = " rcv vaginal"
+		elseif site == 4
+			actFacts = " rcv dp"
+		elseif site >= 5 || !sceneHasPenetrator
+			;her hands are busy, or nothing measured in an all-female scene
+			cat = "BreathySoft"
+			if intense
+				cat = "BreathyIntense"
+			endif
+		endif
+		;site 0 with a penetrator present: the plausible grunt stands unchanged
+	endif
+	if cat == "PenetrativeGrunts" && intense
 		cat = "NearOrgasmNoises"
 	endif
-	if female && !FemaleIsPenetrated(a)
-		if intense
-			cat = "BreathyIntense"
-		else
-			cat = "BreathySoft"
-		endif
-	endif
-	MasterScript.PlaySound(cat, a, False, "npc_low", "slove_np" + a.GetFormID(), SceneFacts(intense))
+	MasterScript.PlaySound(cat, a, False, "npc_low", "slove_np" + a.GetFormID(), SceneFacts(intense) + actFacts)
 EndFunction
 
-;-1 = installed AudioUtil predates the PPA penetration site (API v9 / 0.9.21), 1 =
-;available, 0 = not probed yet (cached per instance, like audioUtilPauseAPI below)
+;-1 = the installed AudioUtil predates that API level, 1 = available, 0 = not
+;probed yet (cached per instance, like audioUtilPauseAPI below)
 int audioUtilSiteAPI
+int audioUtilSnapshotAPI
 
-; Is this female actually being penetrated? PPA answers per RECEIVER when it can
-; (site 0 = nothing measured, so fall through); with no PPA answer, grunt only when
-; the scene HAS a likely penetrator - a male or a creature, the common case, which
-; keeps M/F NPC scenes exactly as before - so an all-female scene breathes instead
-; of grunting at nobody.
-bool Function FemaleIsPenetrated(Actor a)
+; One PPA reading for one line: [0] depth, [1] context bitmask, [2] her
+; penetration site (slots match AudioUtilPPA.GetSnapshot). Empty = no
+; measurement. One native on AudioUtil 0.9.22+ (API v10); assembled from the
+; scalar getters on older builds - depth and context have always existed, the
+; site needs API v9. Read once per line, never polled in a loop.
+float[] Function ReadPPA(Actor a)
+	if a == None || !AudioUtilPPA.IsConnected()
+		return PapyrusUtil.FloatArray(0)
+	endif
+	if audioUtilSnapshotAPI == 0
+		if AudioUtil.GetAPIVersion() >= 10
+			audioUtilSnapshotAPI = 1
+		else
+			audioUtilSnapshotAPI = -1
+		endif
+	endif
+	if audioUtilSnapshotAPI == 1
+		return AudioUtilPPA.GetSnapshot(a)
+	endif
 	if audioUtilSiteAPI == 0
 		if AudioUtil.GetAPIVersion() >= 9
 			audioUtilSiteAPI = 1
@@ -321,13 +366,13 @@ bool Function FemaleIsPenetrated(Actor a)
 			audioUtilSiteAPI = -1
 		endif
 	endif
-	if audioUtilSiteAPI == 1 && AudioUtilPPA.IsConnected()
-		int site = AudioUtilPPA.GetPenetrationSite(a)
-		if site != 0
-			return site == 2 || site == 3 || site == 4 ;Anus / Vagina / Both
-		endif
+	float[] r = PapyrusUtil.FloatArray(3)
+	r[0] = AudioUtilPPA.GetDepth(a)
+	r[1] = AudioUtilPPA.GetContext(a) as float
+	if audioUtilSiteAPI == 1
+		r[2] = AudioUtilPPA.GetPenetrationSite(a) as float
 	endif
-	return sceneHasPenetrator
+	return r
 EndFunction
 
 ;-1 = installed AudioUtil predates IsGamePaused, 1 = available, 0 = not probed yet

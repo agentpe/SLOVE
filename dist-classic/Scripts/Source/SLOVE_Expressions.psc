@@ -1381,7 +1381,7 @@ bool IsOrgasming
 
 String Function GetHentaiExpression()
 
-	string 	HentaiScenario = StorageUtil.GetStringValue(None, "HentaiScenario", "")
+	string 	HentaiScenario = SLOVE_Utils.GetHentaiScenario()
 	if !isplayer || HentaiScenario == ""
 		bool giving = IsGivingAnalPenetration() || IsGivingVaginalPenetration() || IsGettingSuckedoff()
 		int enj = 0

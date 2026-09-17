@@ -37,3 +37,51 @@ EndFunction
 Bool Function GamePaused() Global
 	return AudioUtil.GetAPIVersion() >= 7 && AudioUtil.IsGamePaused()
 EndFunction
+
+;=== StorageUtil-backed scene state ===
+;The string keys ARE the cross-script contract - these accessors are its one
+;spelling (a hand-typed key already leaked once: scene teardown unset
+;"Scenario" while everything else read "HentaiScenario", so the value
+;survived the scene AND the save).
+
+;"Orgasming" on the actor: her climax window - set by the orgasm state
+;machine, polled by the update loop and the wait gates
+Bool Function IsOrgasming(Actor a) Global
+	return StorageUtil.GetIntValue(a, "Orgasming", 0) == 1
+EndFunction
+
+Function SetOrgasming(Actor a, Bool active) Global
+	if active
+		StorageUtil.SetIntValue(a, "Orgasming", 1)
+	else
+		StorageUtil.UnsetIntValue(a, "Orgasming")
+	endif
+EndFunction
+
+;"HandlingMaleOrgasm" on the actor: re-entrancy latch for the partner-orgasm
+;reaction thread
+Bool Function IsHandlingMaleOrgasm(Actor a) Global
+	return StorageUtil.GetIntValue(a, "HandlingMaleOrgasm", 0) != 0
+EndFunction
+
+Function SetHandlingMaleOrgasm(Actor a, Bool active) Global
+	if active
+		StorageUtil.SetIntValue(a, "HandlingMaleOrgasm", 1)
+	else
+		StorageUtil.UnsetIntValue(a, "HandlingMaleOrgasm")
+	endif
+EndFunction
+
+;"HentaiScenario" on None: the voices-to-expressions sync - Voice names the
+;beat it just voiced, SLOVE_Expressions reads it every pass
+Function SetHentaiScenario(String scenario) Global
+	StorageUtil.SetStringValue(None, "HentaiScenario", scenario)
+EndFunction
+
+String Function GetHentaiScenario() Global
+	return StorageUtil.GetStringValue(None, "HentaiScenario", "")
+EndFunction
+
+Function ClearHentaiScenario() Global
+	StorageUtil.UnsetStringValue(None, "HentaiScenario")
+EndFunction

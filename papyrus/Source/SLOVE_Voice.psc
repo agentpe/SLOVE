@@ -654,17 +654,17 @@ Event OnActorOrgasm(Form actorRef, Int thread)
 			PlaySound("Orgasm", actorHavingOrgasm, soundPriority = 3, waitForCompletion = False, debugtext = "Orgasm", forceFemaleVoice = true, extraFacts = "mine")
 		endif
 
-		if StorageUtil.GetIntValue(MainFemaleActor, "HandlingMaleOrgasm", 0) != 0
+		if SLOVE_Utils.IsHandlingMaleOrgasm(MainFemaleActor)
 			PrintDebug("[ProcessSpontaneousOrgasm] Skipped because MainFemaleActor is already HandlingMaleOrgasm.")
 			return
 		EndIf
 
-		if isFemaleOrgasming()
+		if SLOVE_Utils.IsOrgasming(mainFemaleActor)
 			PrintDebug("[ProcessSpontaneousOrgasm] Skipped because MainFemaleActor is currently orgasming.")
 			return
 		EndIf
 
-		StorageUtil.setintvalue(MainFemaleActor ,"HandlingMaleOrgasm", 1)
+		SLOVE_Utils.SetHandlingMaleOrgasm(MainFemaleActor, true)
 
 		if mainFemaleEnjoyment <= FemaleOrgasmHypeEnjoyment
 			if CurrentPenetrationLvl() > 1
@@ -723,15 +723,15 @@ Event OnActorOrgasm(Form actorRef, Int thread)
 		endif
 
 
-		StorageUtil.setintvalue(MainFemaleActor ,"HandlingMaleOrgasm", 0)
+		SLOVE_Utils.SetHandlingMaleOrgasm(MainFemaleActor, false)
 
 	ElseIf actorHavingOrgasm == mainFemaleActor
 
-		if StorageUtil.Getintvalue(MainFemaleActor ,"Orgasming", 0) == 1
+		if SLOVE_Utils.IsOrgasming(MainFemaleActor)
 			return
 		endif
 
-		StorageUtil.setintvalue(MainFemaleActor ,"Orgasming", 1)
+		SLOVE_Utils.SetOrgasming(MainFemaleActor, true)
 		printdebug("Female orgasm detected (Non-linear).")
 
 		ASLAddOrgasmSSquirt()
@@ -777,7 +777,7 @@ Event OnActorOrgasm(Form actorRef, Int thread)
 			ReacttoFemaleOrgasmNext = true
 			ReactedtoFemaleOrgasmThisSession = true
 		endif
-		StorageUtil.setintvalue(MainFemaleActor ,"Orgasming", 0)
+		SLOVE_Utils.SetOrgasming(MainFemaleActor, false)
 	EndIf
 
 EndEvent
@@ -825,9 +825,9 @@ Event OnUpdate()
 			printdebug("Waiting for Director to finish Updating")
 		endwhile
 
-		if isFemaleOrgasming()
+		if SLOVE_Utils.IsOrgasming(mainFemaleActor)
 			int orgasmfailsafe = 0
-			while isFemaleOrgasming() && orgasmfailsafe < 30 ;cap: a stuck Orgasming flag must not hang the update loop forever
+			while SLOVE_Utils.IsOrgasming(mainFemaleActor) && orgasmfailsafe < 30 ;cap: a stuck Orgasming flag must not hang the update loop forever
 				Utility.wait(1)
 				orgasmfailsafe = orgasmfailsafe + 1
 			EndWhile
@@ -840,7 +840,7 @@ Event OnUpdate()
 		elseif StorageUtil.GetIntValue(None, "DirectorAdvanceStage", 0) == 1
 			printdebug("lets Director Advance.")
 			;wait for director to update before Continue
-			while DirectorLastLabelTime == MasterScript.GetDirectorLastLabelTime() && MasterScript.GetDirectorLastLabelTime() != 0 && StorageUtil.Getintvalue(MainFemaleActor ,"HandlingMaleOrgasm", 0) == 0 && StorageUtil.Getintvalue(MainFemaleActor ,"Orgasming", 0) == 0
+			while DirectorLastLabelTime == MasterScript.GetDirectorLastLabelTime() && MasterScript.GetDirectorLastLabelTime() != 0 && !SLOVE_Utils.IsHandlingMaleOrgasm(MainFemaleActor) && !SLOVE_Utils.IsOrgasming(MainFemaleActor)
 				utility.wait(0.3)
 				printdebug("Waiting for Director to Advance")
 			endwhile
@@ -956,7 +956,9 @@ Function RemoveTracker()
 		return
 	endif
 	TrackerRemoved = true
-	StorageUtil.unSetStringvalue(None, "Scenario")
+;BUGFIX: this used to unset the wrong key ("Scenario"), so the
+	;HentaiScenario expressions-sync value leaked past scene end and into saves
+	SLOVE_Utils.ClearHentaiScenario()
 	;stop the update loop first so nothing re-enters teardown during the grace wait
 	UnregisterForUpdate()
 	;silence stragglers on the ambient/mundane groups immediately, but do NOT duck
@@ -971,8 +973,8 @@ Function RemoveTracker()
 	ASLRemoveOrgasmSSquirt()
 	ASLRemoveThickCumleak()
 	ASLRemoveCumPool()
-	StorageUtil.Unsetintvalue(MainFemaleActor ,"HandlingMaleOrgasm")
-	StorageUtil.Unsetintvalue(MainFemaleActor ,"Orgasming")
+	SLOVE_Utils.SetHandlingMaleOrgasm(MainFemaleActor, false)
+	SLOVE_Utils.SetOrgasming(MainFemaleActor, false)
 	;grace: let the in-flight climax cry finish before cutting the *_high groups.
 	;A full orgasm line (e.g. a Karryn-style spoken climax) runs several seconds; a
 	;2s grace cut it off midway, so this is 6s. The scene is already over, so the
@@ -3769,7 +3771,7 @@ endfunction
 
 Function ChangeHentaiExpression(String Scenario)
 	;voices-to-expressions sync: SLOVE_Expressions reads this key every pass
-	StorageUtil.SetStringValue(None, "HentaiScenario" ,Scenario)
+	SLOVE_Utils.SetHentaiScenario(Scenario)
 
 EndFunction
 
@@ -3848,12 +3850,6 @@ Endfunction
 Bool Function IsfinalStage()
 	return currentstage == MasterScript.GetStagesCount()
 endfunction
-
-
-
-bool function isFemaleOrgasming()
-	return StorageUtil.Getintvalue(MainFemaleActor ,"Orgasming", 0) == 1
-Endfunction
 
 
 

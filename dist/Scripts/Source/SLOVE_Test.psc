@@ -276,5 +276,5 @@ Function DumpState() Global
 	MiscUtil.PrintConsole("  enablevoice=" + SLOVE_Config.GetInt("director.enablevoice", -1) + " enableexpressions=" + SLOVE_Config.GetInt("director.enableexpressions", -1))
 	MiscUtil.PrintConsole("  pcvolume=" + SLOVE_Config.GetInt("voice.pcvolume", -1) + " voiceallactors=" + SLOVE_Config.GetInt("voice.voiceallactors", -1))
 	MiscUtil.PrintConsole("  player slot=" + AudioUtil.GetSlotForActor(Game.GetPlayer()))
-	MiscUtil.PrintConsole("  esp loaded=" + (Game.GetModByName("SLOVE.esp") != 255))
+	MiscUtil.PrintConsole("  esp loaded=" + SLOVE_Utils.isDependencyReady("SLOVE.esp"))
 EndFunction

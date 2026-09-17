@@ -852,7 +852,7 @@ Function InitializeConfigandForms()
 	;stale 1 would pause expressions AND make resetexpressions() skip the scene-end
 	;face reset on every scene from then on (permanently stuck faces)
 	if IsPlayer
-		SLSAhegaoActive = Game.GetModByName("SL Survival.esp") != 255 && StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0) == 1
+		SLSAhegaoActive = SLOVE_Utils.isDependencyReady("SL Survival.esp") && StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0) == 1
 	endif
 
 	if IsPlayer

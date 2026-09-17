@@ -816,8 +816,6 @@ Event OnUpdate()
 		;ASLTagIntense keeps an authored intense stage intense even when enjoyment dips.
 		ASLCurrentlyintense = (intenseenjoyment > 0 && mainFemaleEnjoyment >= intenseenjoyment) || (ASLTagIntense && !intenseFromBarOnly)
 
-		ProcessReadytoAdvanceStage()
-
 		int failsafe = 0
 		while MasterScript.isUpdating() && failsafe < 50 ;wait for director to finish updating
 			Utility.wait(0.1)
@@ -3384,13 +3382,6 @@ bool function ASLIsBroken()
 	return enablebrokenstatus == 1 && MasterScript.IsBroken(mainFemaleActor)
 endfunction
 
-Bool SomeoneNeedstoOrgasm = false
-
-Function ProcessReadytoAdvanceStage()
-	;SLO VE: dropped - stage-advance handshake (the director has no stage control);
-	;kept as a no-op so the OnUpdate flow stays verbatim
-	SomeoneNeedstoOrgasm = false
-endfunction
 
 Bool Function MainFemaleisBurstingAtSeams()
 	return false ;SLO VE: dropped - sr_fillherup inflation check

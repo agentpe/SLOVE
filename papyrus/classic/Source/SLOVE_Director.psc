@@ -191,7 +191,7 @@ Function Maintenance()
 	;Gated on SL Survival being loaded: _SLS_IsAhegaoing lives in the co-save and
 	;outlives an SLS uninstall - honoring a stale 1 would permanently block the
 	;player's lipsync. Without SLS any stale marker is cleared instead.
-	if Game.GetModByName("SL Survival.esp") != 255
+	if SLOVE_Utils.isDependencyReady("SL Survival.esp")
 		StorageUtil.SetIntValue(playerref, "SLOVE_FaceOwnsMouth_SLS", StorageUtil.GetIntValue(None, "_SLS_IsAhegaoing", 0))
 	else
 		StorageUtil.UnsetIntValue(playerref, "SLOVE_FaceOwnsMouth_SLS")

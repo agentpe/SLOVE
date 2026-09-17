@@ -196,7 +196,7 @@ EndFunction
 ;PullOutGape) and the gag pool (routed via gag_slot, not this slot) are excluded.
 ;Names match case- and space-insensitively in AudioUtil, so exact casing is cosmetic.
 String[] Function AllFemaleVariationBCategories() Global
-	String[] cats = new String[69]
+	String[] cats = new String[70]
 	cats[0] = "After Orgasm Comments"
 	cats[1] = "After Orgasm Comments Intense"
 	cats[2] = "Blowjob Action"
@@ -272,5 +272,9 @@ String[] Function AllFemaleVariationBCategories() Global
 	cats[66] = "Insertion Anal Comments"
 	cats[67] = "Intense Transition Comments"
 	cats[68] = "Male Orgasm Soon Ask For Anal Cum Intense"
+	;the intense twin of cats[2]: emitted by PlayBlowjobVarB and by the female-NPC
+	;beat, and shipped by real packs, but it was never in this list - so a B pack
+	;missing it audited clean and then fell to stock on every intense oral line.
+	cats[69] = "Blowjob Action Intense"
 	return cats
 EndFunction

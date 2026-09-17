@@ -16,7 +16,8 @@ A pack does **not** need to supply every category. Whatever it lacks resolves th
 
 ## Female categories
 
-79 categories. Requested for the player and for female NPCs.
+79 categories. All 79 are requested for the player; a female NPC reaches 18 of them
+(see [What NPCs Do and Don't Voice](npc-coverage.md) for which, and why).
 
 ### Greetings & affection
 

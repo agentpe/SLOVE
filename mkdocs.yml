@@ -44,6 +44,7 @@ nav:
     - Installing & Routing Female Packs: packs/female.md
     - Male, Creature, Gag & SFX Slots: packs/slots.md
     - Category Reference: packs/categories.md
+    - What NPCs Do and Don't Voice: packs/npc-coverage.md
     - Checking Your Pack: packs/checking.md
   - TOML Configuration:
     - Overview — the three files: config/index.md

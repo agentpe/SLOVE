@@ -816,11 +816,7 @@ Event OnUpdate()
 		;ASLTagIntense keeps an authored intense stage intense even when enjoyment dips.
 		ASLCurrentlyintense = (intenseenjoyment > 0 && mainFemaleEnjoyment >= intenseenjoyment) || (ASLTagIntense && !intenseFromBarOnly)
 
-		if !isShortenedScene() && !isLinearScene()
-			ProcessReadytoAdvanceStage()
-		else
-			SomeoneNeedstoOrgasm = false
-		endif
+		ProcessReadytoAdvanceStage()
 
 		int failsafe = 0
 		while MasterScript.isUpdating() && failsafe < 50 ;wait for director to finish updating
@@ -872,7 +868,7 @@ Event OnUpdate()
 		;creature partners pant/growl on their own cadence
 		PlayCreatureBreathing()
 		;SLO VE: dropped - the commented-out linear-scene pre/post orgasm choreography block
-		;(LinearScenePlay* functions) - dead even in the source, gated by isLinearScene()=false
+		;(LinearScenePlay* functions) - dead even in the source (linear scenes were never ported)
 
 		;if gagged, override everything else. Every Play* below routes itself to its
 		;VarB twin when the acting pack is Variation B (see the router at the top of
@@ -886,7 +882,7 @@ Event OnUpdate()
 		elseif IsKissing() && !IsRimming() ;kissing (in a rim-tagged scene KIS is usually the
 			;converted DB's stand-in for the rim lick - fall through to the Rimjob branch below)
 			PlayKissing()
-		elseif MoanOnly == 1 || isShortenedScene()
+		elseif MoanOnly == 1
 			PlayMoanonly()
 		elseif femaleCloseToOrgasm() && mainFemaleEnjoyment > mainMaleEnjoyment && Utility.RandomFloat(0.0, 1.0) < chancetocommentwhenclosetoorgasm && (!IsFemdom() || (teasedClosetoorgasm && IsFemdom()))
 			ASLPlayFemaleOrgasmHype()
@@ -1869,7 +1865,7 @@ Function SyncStageState()
 	endif
 
 	;Play advance stage words
-	if StageTransitioning && actorWithSceneTrackerSpell == mainFemaleActor && !isShortenedScene() && !IsfinalStage()
+	if StageTransitioning && actorWithSceneTrackerSpell == mainFemaleActor && !IsfinalStage()
 
 		printdebug("Stage Transitioning")
 		ASLPlayStageTransition()
@@ -2106,7 +2102,7 @@ EndFunction
 
 ;SLO VE: dropped - LinearScenePlayFemalePreFinalStage/VarB and
 ;LinearScenePlayFemalePostOrgasm/VarB (only reachable from the commented-out
-;linear-scene block in OnUpdate; isLinearScene() is a director stub = false)
+;linear-scene block in OnUpdate; linear scenes were never ported)
 
 Function PlayBlowjob()
 	if VoiceVariation == "B"
@@ -3244,7 +3240,7 @@ Function ASLPlayStageTransition()
 
 	Utility.Wait(Utility.RandomFloat(0.5, 1.0)) ; wait up to 1 second for transition to complete before playing voice
 
-	if isShortenedScene() || moanonly == 1
+	if moanonly == 1
 		if !PreviousStageHasPenetration() && IsgettingPenetrated()
 			PlaySound("PullOutGape", mainFemaleActor, soundPriority = 2, waitForCompletion = false , debugtext="PullOutGape")
 			if ishugepp
@@ -3900,14 +3896,6 @@ endfunction
 bool function isFemaleOrgasming()
 	return StorageUtil.Getintvalue(MainFemaleActor ,"Orgasming", 0) == 1
 Endfunction
-
-bool Function isShortenedScene()
-	return false ;SLO VE: no shortened scenes (Hentairim read a StorageUtil timer modifier)
-endfunction
-
-bool Function isLinearScene()
-	return false ;SLO VE: no linear scenes
-endfunction
 
 
 

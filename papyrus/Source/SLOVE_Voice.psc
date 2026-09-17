@@ -4,7 +4,15 @@ Scriptname SLOVE_Voice extends ActiveMagicEffect
  rotation, the orgasm reaction state machine and the voices-to-expressions sync
  ("HentaiScenario" StorageUtil key). All categories are AudioUtil category
  strings; the DLL resolves the actual voice slot per actor. Settings come from
- SLOVE.toml via SLOVE_Config ("voice." keys).}
+ SLOVE.toml via SLOVE_Config ("voice." keys).
+ FRAMEWORK-FREE since the variant unification: every SexLab read goes through
+ SLOVE_Director's adapter API (docs/framework-adapter.md), so this ONE source
+ serves both the P+ and classic script sets - it compiles once, ships in the
+ FOMOD Core, and papyrus/classic/Source deliberately has no copy of it. Keep it
+ that way: never reference a SexLab thread, animation, registry or alias type
+ directly - the build's Assert-VariantTypes scans the pex and fails if one
+ sneaks back in. (This docstring is embedded in the pex, which is why it spells
+ none of those type names out.)}
 
 ;References
 SexLabFramework Property SexLab Auto ;CK-filled
@@ -48,7 +56,6 @@ Int voiceAllActors = 1             ;SLOVE.toml "voice.voiceallactors"
 Actor playerCharacter = None
 
 Int ThreadID = -1
-SexLabThread CurrentThread = None
 string CurrentSceneid = ""
 bool GreetedMalePartner = false
 
@@ -62,7 +69,6 @@ Int partnerOrgasmCount = 0
 Int femaleRecordedOrgasmCount = 0
 Int locationOfLastPartnerOrgasm = 0 ;0 - not set (or other), 1 - oral, 2 - vaginal, 3 = anal
 Int currentStage = -1 ;Current stage of the scene that is currently playing
-string currentStageID = ""
 
 Float timeOfLastStageStart = 0.0
 Float timeOfLastPartnerOrgasm = -20.0
@@ -80,7 +86,7 @@ bool commentedorgasmremark = false
 Bool ASLCurrentlyintense = false
 Bool ASLTagIntense = false     ;authored-tag/label intensity baseline; enjoyment overlays it (see IVDTUpdate)
 Bool intenseFromBarOnly = false ;voice.intense_from_bar_only - drop the authored-tag path, gate intensity on the enjoyment bar alone (SLSO-style)
-int intenseenjoyment           ;PC enjoyment at/above which the voice goes intense (mirrors SLSO sl_hot_voice_strength; 0 = off)
+int intenseenjoyment           ;PC enjoyment at/above which the voice goes intense (0 = off; on classic the Director's GetEnjoyment folds in the SLSO meter)
 
 int CameInsideCount = 0
 Bool ReacttoFemaleOrgasmNext = false
@@ -140,7 +146,7 @@ float	orgasmvolume
 
 Function InitializeConfigValues()
 
-	ActorsInPlay = CurrentThread.GetPositions()
+	ActorsInPlay = MasterScript.GetPositions()
 	;SLO VE: dropped - donotadvance* keys (stage-advance handshake), chancetoorgasmsquirt /
 	;enablethickcumleak / chancetoleakthickcum (cum shaders)
 	enablebrokenstatus = SLOVE_Config.GetInt("resistance.enablebrokenstatus", 1)
@@ -191,8 +197,7 @@ Function PerformInitialization()
 	AudioUtil.UnduckGroup("pc_orgasm")
 	AudioUtil.UnduckGroup("partner_low")
 	AudioUtil.UnduckGroup("partner_high")
-	CurrentThread = Sexlab.GetThreadByActor(actorWithSceneTrackerSpell)
-	ThreadID = CurrentThread.GetThreadID()
+	ThreadID = MasterScript.GetThreadID()
 
 	FindActorsAndVoices()
 
@@ -222,20 +227,19 @@ Function PerformInitialization()
 	AudioUtil.SetGroupVolume("pc_orgasm", orgasmvolume)
 
 
-	CurrentSceneid = CurrentThread.GetActiveScene()
-	currentStageID = CurrentThread.GetActiveStage()
-	currentstage = GetLegacyStageNum(CurrentSceneid, currentStageID)
-	timeOfLastStageStart = CurrentThread.GetTimeTotal()
+	CurrentSceneid = MasterScript.GetActiveSceneId()
+	currentstage = MasterScript.GetStageNum()
+	timeOfLastStageStart = MasterScript.GetTimeTotal()
 
 	ishugepp = ishugePP()
-	UpdateLabels(CurrentSceneid , currentstage , PCPosition) ;update only for PC
+	UpdateLabels(PCPosition) ;update only for PC
 
 	if stringutil.find(Labelsconcat ,"1F") > -1 || IsGettingInsertedBig()
 		ASLTagIntense = true
 	else
 		ASLTagIntense = false
 	endif
-	;P+: overlay SLSO enjoyment onto the label baseline so a high-enjoyment PC reads
+	;overlay enjoyment onto the label baseline so a high-enjoyment PC reads
 	;intense even on a soft-tagged stage (mirrors classic; the OnUpdate loop refreshes
 	;it every tick so rising enjoyment flips intense mid-stage, not only at stage change)
 	ASLCurrentlyintense = (intenseenjoyment > 0 && mainFemaleEnjoyment >= intenseenjoyment) || (ASLTagIntense && !intenseFromBarOnly)
@@ -285,7 +289,7 @@ EndFunction
 
 Function FindActorsAndVoices()
 
-	Actor[] actorList = CurrentThread.GetPositions()
+	Actor[] actorList = MasterScript.GetPositions()
 	Int actorCount = actorList.Length
 	Int actorIndex = 0
 
@@ -394,7 +398,7 @@ Actor Function PickSpeakingMale()
 	if Utility.RandomInt(1, 100) <= 60
 		return mainMaleActor
 	endif
-	Float now = CurrentThread.GetTimeTotal()
+	Float now = MasterScript.GetTimeTotal()
 	if now - lastSecondaryLineTime < secondaryLineCooldown && Utility.RandomInt(1, 100) > 25
 		return mainMaleActor
 	endif
@@ -417,7 +421,7 @@ Actor Function PickSpeakingFemale()
 	if sceneFemales.length == 0
 		return None
 	endif
-	Float now = CurrentThread.GetTimeTotal()
+	Float now = MasterScript.GetTimeTotal()
 	if now - lastFemaleLineTime < femaleLineCooldown
 		return None
 	endif
@@ -606,7 +610,7 @@ Bool Function FemaleNpcIsVictim(Actor a, Int ctx = 0)
 	if Math.LogicalAnd(ctx, 8) == 8
 		return true
 	endif
-	return CurrentThread.GetSubmissive(a)
+	return MasterScript.IsSubmissive(a)
 EndFunction
 
 ;Voice the lead's FEMALE partner - the woman filling the mainMaleActor role slot
@@ -627,7 +631,7 @@ Function PlayFemalePartnerComments()
 		return
 	endif
 	Actor partner = mainMaleActor
-	Float now = CurrentThread.GetTimeTotal()
+	Float now = MasterScript.GetTimeTotal()
 	if now - lastPartnerFemaleLineTime < partnerFemaleLineCooldown
 		return
 	endif
@@ -654,7 +658,7 @@ Function PlayCreatureBreathing()
 	if enablecreaturebreathing != 1 || sceneCreatures.length == 0 || TrackerRemoved
 		return
 	endif
-	Float now = CurrentThread.GetTimeTotal()
+	Float now = MasterScript.GetTimeTotal()
 	if now - lastCreatureBreathTime < creatureBreathCooldown
 		return
 	endif
@@ -771,7 +775,7 @@ Event IVDTOnOrgasm(Form actorRef, Int thread)
 
 		if mainFemaleEnjoyment <= FemaleOrgasmHypeEnjoyment
 			if CurrentPenetrationLvl() > 1
-				if ishugepp && (actorHavingOrgasm == mainMaleActor || SexLab.getsex(actorHavingOrgasm) > 2)
+				if ishugepp && (actorHavingOrgasm == mainMaleActor || Sexlab.GetGender(actorHavingOrgasm) > 1)
 					if voicevariation == "B"
 						;Insertion Over The Top
 						PlaySound("InsertionAnalExcited", mainFemaleActor, debugtext="Insertion Over The Top", extraFacts = "theirs")
@@ -913,7 +917,7 @@ Event OnUpdate()
 		mainMaleEnjoyment = GetActorEnjoyment(mainMaleActor)
 		printdebug(" PC Enjoyment = " + mainFemaleEnjoyment)
 		printdebug(" main Male Enjoyment = " + mainMaleEnjoyment)
-		;P+: refresh the enjoyment->intense overlay with the value just read, so rising
+		;refresh the enjoyment->intense overlay with the value just read, so rising
 		;enjoyment flips the scene to intense mid-stage (not only at a stage change).
 		;intenseenjoyment (voice.intenseenjoyment, 0 = off) is the SLSO hot-voice threshold;
 		;ASLTagIntense keeps an authored intense stage intense even when enjoyment dips.
@@ -1110,13 +1114,13 @@ Function RecordPartnerOrgasm()
 
 
 	partnerOrgasmCount += 1
-	timeOfLastPartnerOrgasm = CurrentThread.GetTimeTotal()
+	timeOfLastPartnerOrgasm = MasterScript.GetTimeTotal()
 
 EndFunction
 
 Function RecordFemaleOrgasm()
 	femaleRecordedOrgasmCount += 1
-	timeOfLastRecordedFemaleOrgasm = CurrentThread.GetTimeTotal()
+	timeOfLastRecordedFemaleOrgasm = MasterScript.GetTimeTotal()
 
 EndFunction
 
@@ -1124,7 +1128,7 @@ Int Function GetActorEnjoyment(Actor actorInQuestion)
 	If actorInQuestion == None
 		Return -1
 	Else
-		Return CurrentThread.GetEnjoyment(actorInQuestion)
+		Return MasterScript.GetEnjoyment(actorInQuestion)
 	EndIf
 EndFunction
 
@@ -1712,7 +1716,7 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 	;NecroTargetByPosition covers the FunnyBizness-style necro scene that flags NO SexLab
 	;submissive at all (the victim flag then reads false for the corpse) - it falls back to
 	;Hentairim's position-0 rule, but only when nothing is flagged.
-	if (audioActor == mainFemaleActor || CurrentThread.GetSubmissive(audioActor) || NecroTargetByPosition(audioActor)) && IsUnconcious()
+	if (audioActor == mainFemaleActor || MasterScript.IsSubmissive(audioActor) || NecroTargetByPosition(audioActor)) && IsUnconcious()
 		Printdebug("Voice + lipsync suppressed (unconscious target) : " + debugtext)
 		Return
 	endif
@@ -1873,14 +1877,14 @@ Function MakeRomanticCommentIfRightTime()
 
 	PlaySound("LoveyDovey", mainFemaleActor, debugtext="LoveyDovey")
 
-	timeOfLastRomanticRemark = CurrentThread.GetTimeTotal()
+	timeOfLastRomanticRemark = MasterScript.GetTimeTotal()
 
 EndFunction
 
 Bool Function ShouldMakeRomanticComment()
 	if femaleisvictim()
 		return false
-	elseIf CurrentThread.GetTimeTotal() - timeOfLastRomanticRemark < 60 ;Too soon. Romantic comments should be spaced out and rare
+	elseIf MasterScript.GetTimeTotal() - timeOfLastRomanticRemark < 60 ;Too soon. Romantic comments should be spaced out and rare
 		Return False
 	ElseIf !IsgettingPenetrated() && Currentstage <= 2
 		Return Utility.RandomFloat(0.0, 1.0) < 0.1
@@ -1974,11 +1978,11 @@ endfunction
 
 
 Bool Function FemaleIsVictim()
-	return CurrentThread.GetSubmissive(mainFemaleActor) && !ASLisBroken() && EnableVictimScenario == 1
+	return MasterScript.IsSubmissive(mainFemaleActor) && !ASLisBroken() && EnableVictimScenario == 1
 EndFunction
 
 Bool Function MaleIsVictim()
-	return CurrentThread.GetSubmissive(mainMaleActor) && EnableVictimScenario == 1
+	return MasterScript.IsSubmissive(mainMaleActor) && EnableVictimScenario == 1
 EndFunction
 
 Function IVDTUpdate()
@@ -1986,14 +1990,13 @@ Function IVDTUpdate()
 	bool StageTransitioning = false
 
 	if DirectorLastLabelTime != MasterScript.GetDirectorLastLabelTime()
-		CurrentSceneid = CurrentThread.GetActiveScene()
-		currentStageID = CurrentThread.GetActiveStage()
-		currentstage = GetLegacyStageNum(CurrentSceneid, currentStageID)
-		timeOfLastStageStart = CurrentThread.GetTimeTotal()
+		CurrentSceneid = MasterScript.GetActiveSceneId()
+		currentstage = MasterScript.GetStageNum()
+		timeOfLastStageStart = MasterScript.GetTimeTotal()
 
 		ishugepp = ishugePP()
 		printdebug("ishugepp Scenario : " + ishugepp)
-		UpdateLabels(CurrentSceneid , currentstage , PCPosition) ;update only for PC
+		UpdateLabels(PCPosition) ;update only for PC
 		StageTransitioning = true
 		;set intensity
 		ASLpreviouslyintense = ASLcurrentlyIntense
@@ -2003,7 +2006,7 @@ Function IVDTUpdate()
 		else
 			ASLTagIntense = false
 		endif
-		;P+: overlay SLSO enjoyment onto the label baseline (see PerformInitialization)
+		;overlay enjoyment onto the label baseline (see PerformInitialization)
 		ASLCurrentlyintense = (intenseenjoyment > 0 && mainFemaleEnjoyment >= intenseenjoyment) || (ASLTagIntense && !intenseFromBarOnly)
 
 		if currentstage <= 2
@@ -2103,7 +2106,7 @@ Function PlayRimjob()
 	;comments reuse the blowjob comment chance). Same folder names in the A and B
 	;layouts. A pack without them degrades through the config alias/fallback layer to
 	;its own Licking*/Blowjob* audio, then stock (see SLOVE_voices.toml).
-	if CurrentThread.HasSceneTag("Forced") || femaleisvictim()
+	if MasterScript.HasSceneTag("Forced") || femaleisvictim()
 		PlaySound("RimjobForced", mainFemaleActor, debugtext = "Rimjob Forced")
 	elseif Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !ASLIsBroken()
 		PlaySound("RimjobComments", mainFemaleActor, debugtext = "Rimjob Comments")
@@ -2123,7 +2126,7 @@ Function PlayCunnilingus()
 	;forced/comments/intense/soft split. A pack missing a folder degrades through
 	;the config alias/fallback layer to its own Blowjob* audio, then stock (see
 	;SLOVE_voices.toml). Comments reuse the blowjob comment chance - same beat.
-	if CurrentThread.HasSceneTag("Forced") || femaleisvictim()
+	if MasterScript.HasSceneTag("Forced") || femaleisvictim()
 		PlaySound("LickingForced", mainFemaleActor, debugtext = "Licking Forced")
 	elseif Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !ASLIsBroken()
 		PlaySound("LickingComments", mainFemaleActor, debugtext = "Licking Comments")
@@ -2227,7 +2230,7 @@ Function PlayMaleMoaning()
 	if enablemalemoaning != 1 || EnableMaleVoice != 1 || sceneMales.length == 0 || TrackerRemoved
 		return
 	endif
-	Float now = CurrentThread.GetTimeTotal()
+	Float now = MasterScript.GetTimeTotal()
 	if now - lastMaleMoanTime < maleMoanCooldown
 		return
 	endif
@@ -2291,7 +2294,7 @@ endfunction
 Function PlayBlowjobVarB()
 
 	if Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !femaleisvictim() && !ASLIsBroken()
-		if CurrentThread.HasSceneTag("Forced") || IsgettingPenetrated()
+		if MasterScript.HasSceneTag("Forced") || IsgettingPenetrated()
 			;Blowjob Forced Comments
 			PlaySound("NoticeMaleWantsMore", mainFemaleActor, debugtext = "Blowjob Forced Comments")
 		elseif ASLcurrentlyIntense
@@ -2301,7 +2304,7 @@ Function PlayBlowjobVarB()
 			;Blowjob Comments
 			PlaySound("BlowjobRemarks", mainFemaleActor, debugtext = "Blowjob Comments")
 		endif
-	elseif CurrentThread.HasSceneTag("Forced") || IsgettingPenetrated()
+	elseif MasterScript.HasSceneTag("Forced") || IsgettingPenetrated()
 		;Blowjob Forced
 		PlaySound("AskForAnal", mainFemaleActor, debugtext = "Blowjob Forced")
 	elseif ASLcurrentlyIntense
@@ -2882,7 +2885,7 @@ Function PlayGettingFuckedDouble()
 					PlaySound("PenetrativeCommentsIntense", mainFemaleActor, debugtext = "PenetrativeCommentsIntense")
 				endif
 			else
-				if CurrentThread.HasSceneTag("Tentacles")
+				if MasterScript.HasSceneTag("Tentacles")
 					PlaySound("NearOrgasmNoises", mainFemaleActor, debugtext = "NearOrgasmNoises")
 				else
 					PlaySound("SensitivePleasure", mainFemaleActor, debugtext = "SensitivePleasure")
@@ -2901,7 +2904,7 @@ Function PlayGettingFuckedDouble()
 			elseIf  Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonNonIntenseStage
 				PlaySound("TeaseAggressivePartner", mainFemaleActor, debugtext = "TeaseAggressivePartner")
 			else
-				if CurrentThread.HasSceneTag("Tentacles")
+				if MasterScript.HasSceneTag("Tentacles")
 					PlaySound("PenetrativeGrunts", mainFemaleActor, soundPriority = 1 , debugtext = "PenetrativeGrunts")
 				else
 					PlaySound("NearOrgasmNoises", mainFemaleActor, debugtext = "NearOrgasmNoises")
@@ -2964,7 +2967,7 @@ Function PlayEnding()
 		else
 			PlaySound("AfterOrgasmExclamations", mainFemaleActor,debugtext = "AfterOrgasmExclamations")
 		EndIf
-	elseif CurrentThread.HasSceneTag("femdom") && Utility.RandomFloat(0.0, 1.0) < ChanceToCommentononAttackingStage
+	elseif MasterScript.HasSceneTag("femdom") && Utility.RandomFloat(0.0, 1.0) < ChanceToCommentononAttackingStage
 		PlaySound("Amused", mainFemaleActor,debugtext = "Amused")
 	else
 		PlaySound("AfterOrgasmExclamations", mainFemaleActor,debugtext = "AfterOrgasmExclamations")
@@ -3029,7 +3032,7 @@ function ASLPlayMaleClosetoOrgasmComments()
 		return
 	endif
 	;Teasing Male Close to Orgasm
-	if IsStimulatingOthers() && !IsgettingPenetrated() && !IsGettingStimulated() && (SexLab.getsex(mainMaleActor) == 0 || SexLab.getsex(mainMaleActor) == 2)
+	if IsStimulatingOthers() && !IsgettingPenetrated() && !IsGettingStimulated() && IsVoicedMale(mainMaleActor) ;male or schlonged futa (was P+ getsex 0/2; classic plain male) - the unified predicate
 
 		PlaySound("ReadyToGetGoing", mainFemaleActor, debugtext = "ReadyToGetGoing")
 
@@ -3067,7 +3070,7 @@ endfunction
 
 function ASLPlayMaleClosetoOrgasmCommentsVarB()
 
-	if !FemaleIsVictim() && IsStimulatingOthers() && !IsgettingPenetrated() && (SexLab.getsex(mainMaleActor) == 0 || SexLab.getsex(mainMaleActor) == 2)
+	if !FemaleIsVictim() && IsStimulatingOthers() && !IsgettingPenetrated() && IsVoicedMale(mainMaleActor) ;male or schlonged futa - see the twin gate above
 		if IsGettingStimulated()
 			PlaySound("ReadyToGetGoing", mainFemaleActor, debugtext = "Ready To Get Going")
 		else
@@ -3121,7 +3124,7 @@ Function ASLPlayFemaleOrgasmHype()
 		return
 	endif
 	;skip commenting orgasm if orgasm in quick succession
-	if CurrentThread.GetTimeTotal() - timeOfLastRecordedFemaleOrgasm <= 8
+	if MasterScript.GetTimeTotal() - timeOfLastRecordedFemaleOrgasm <= 8
 		CommentedClosetoOrgasm = true
 
 		return
@@ -3594,19 +3597,19 @@ Bool function HasSchlong(Actor char)
 	if !char
 		return false
 	endif
-	if sexlab.GetGender(char) > 1 ;creature - the TNG branch below returns true for anything not GetSex()==1, which included dogs
+	if sexlab.GetGender(char) > 1 ;creature - the TNG branch below returns true for anything not gender 1, which included dogs
 		return false
 	endif
 	if (schlongfaction)
 		return char.isinfaction(schlongfaction)
 	elseif (TNG_Gentlewoman)
-		if SexLab.GetSex(char) == 1 && !char.HasKeyword(TNG_Gentlewoman)
+		if SexLab.GetGender(char) == 1 && !char.HasKeyword(TNG_Gentlewoman)
 			return false ; Female
 		else
 			return true ; Male or Futa
 		endif
 	else
-		return SexLab.GetSex(char) == 0
+		return SexLab.GetGender(char) == 0
 	endif
 endfunction
 
@@ -3658,9 +3661,9 @@ Int Function CurrentPenetrationLvl()
 EndFunction
 
 Bool Function IsUnconcious()
-	if	sexlab.getsex(mainMaleActor) > 2
+	if	Sexlab.GetGender(mainMaleActor) > 1
 		return false
-	elseif (CurrentThread.HasSceneTag("faint") || CurrentThread.HasSceneTag("sleep") || CurrentThread.HasSceneTag("sleeping") || CurrentThread.HasSceneTag("necro") || CurrentThread.HasSceneTag("unconscious"))
+	elseif (MasterScript.HasSceneTag("faint") || MasterScript.HasSceneTag("sleep") || MasterScript.HasSceneTag("sleeping") || MasterScript.HasSceneTag("necro") || MasterScript.HasSceneTag("unconscious"))
 		Return true
 	else
 		return false
@@ -3676,16 +3679,16 @@ endfunction
 ;position 0). Engine state (IsDead/IsUnconscious) is unusable here - these targets are
 ;live actors merely posed as dead - so tags/position are the only reliable signal.
 Bool Function NecroTargetByPosition(Actor a)
-	if !CurrentThread || CurrentThread.GetSubmissives().length > 0
+	if MasterScript.HasSubmissives()
 		return false
 	endif
-	return CurrentThread.GetPositionIdx(a) == 0
+	return MasterScript.GetPositionIdx(a) == 0
 EndFunction
 
 
 Bool Function MainMaleCanControl()
 	;cowgirl femdom and non forced blowjob -> false
-	if (CurrentThread.HasSceneTag("Cowgirl") || CurrentThread.HasSceneTag("femdom") || CurrentThread.HasSceneTag("Amazon") || (IsSuckingoffOther() && !CurrentThread.HasSceneTag("Forced")))  && ActorsInPlay[0] == mainFemaleActor
+	if (MasterScript.HasSceneTag("Cowgirl") || MasterScript.HasSceneTag("femdom") || MasterScript.HasSceneTag("Amazon") || (IsSuckingoffOther() && !MasterScript.HasSceneTag("Forced")))  && ActorsInPlay[0] == mainFemaleActor
 
 		return false
 	else
@@ -3795,7 +3798,7 @@ Bool Function IsFemdom()
 
 	if	femaleisvictim()
 		return false
-	elseif  CurrentThread.HasSceneTag("Femdom") ||  (PCPosition == 0 && CurrentThread.HasSceneTag("Cowgirl") &&  CurrentThread.HasSceneTag("Forced"))
+	elseif  MasterScript.HasSceneTag("Femdom") ||  (PCPosition == 0 && MasterScript.HasSceneTag("Cowgirl") &&  MasterScript.HasSceneTag("Forced"))
 		return TRUE
 	elseif IsGivingAnalPenetration() || IsGivingOthersIntenseStimulation || IsGivingVaginalPenetration()
 		return TRUE
@@ -3823,7 +3826,7 @@ Bool Function IsRimming()
 endfunction
 
 Bool Function IsRimSceneTagged()
-	return CurrentThread.HasSceneTag("Rimjob") || CurrentThread.HasSceneTag("Rimming") || CurrentThread.HasSceneTag("Anilingus")
+	return MasterScript.HasSceneTag("Rimjob") || MasterScript.HasSceneTag("Rimming") || MasterScript.HasSceneTag("Anilingus")
 endfunction
 
 Bool Function PreviousStageHasPenetration()
@@ -3861,7 +3864,7 @@ Bool IsGivingOthersIntenseStimulation = false
 Float  DirectorLastLabelTime
 
 
-Function UpdateLabels(string anim , int stage , int actorpos = 0 )
+Function UpdateLabels(int actorpos = 0)
 
 	PrevStimulationlabel = Stimulationlabel
 	PrevPenisActionLabel = PenisActionLabel
@@ -3892,7 +3895,7 @@ Function UpdateLabels(string anim , int stage , int actorpos = 0 )
 
 	while counter < ActorsInPlay.length && PCPosition == 0
 		if counter != Actorpos ;ignore PC position
-			Result = SLOVE_Hentairim_Tags.PenisActionLabel(anim , stage , counter)
+			Result = MasterScript.GetPenisActionLabelAtPos(counter)
 
 			if Result == "STF"
 				isTitfuckOthers = true
@@ -4031,7 +4034,7 @@ Function ChangePCExpressions(String debugtext = "")
 Endfunction
 
 Bool Function IsfinalStage()
-	return currentstage == GetLegacyStagesCount(CurrentThread.GetActiveScene())
+	return currentstage == MasterScript.GetStagesCount()
 endfunction
 
 
@@ -4063,16 +4066,6 @@ function WritetoErrorlogs(string Header = "Not Specified" ,String contents = "")
 	SLOVE_Log.WriteLog(Header + " : " + contents, 2)
 endfunction
 
-int Function GetLegacyStageNum(String asScene, String asStage)
-	string[] all_stages = SexlabRegistry.GetAllStages(asScene)
-	if SexlabRegistry.StageExists(asScene, asStage)
-		int stage_num = all_stages.find(asStage)+1
-		return stage_num
-	endif
-	return 0
-EndFunction
-
-int Function GetLegacyStagesCount(String asScene)
-	int stages_count = SexlabRegistry.GetAllStages(asScene).Length
-	return stages_count
-EndFunction
+;SLO VE: GetLegacyStageNum/GetLegacyStagesCount moved behind the Director
+;(GetStageNum/GetStagesCount) in the variant unification - they were the last
+;SexlabRegistry reference keeping this script P+-bound.

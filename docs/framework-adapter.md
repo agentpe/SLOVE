@@ -53,9 +53,23 @@ through the Director so consumers stay firewall-clean): `GetResistance(a)`,
 Known leaks (documented, acceptable): `SLOVE_Hentairim_Tags.HasASLTag` calls
 `SexlabRegistry.IsSceneTag`; `GetLegacyStageNum` uses
 `SexlabRegistry.GetAllStages` (director-internal). Pragmatic port leaks:
-`SLOVE_Voice`, `SLOVE_SFX` and `SLOVE_Resistance` still hold their own
+`SLOVE_SFX` and `SLOVE_Resistance` still hold their own
 `SexLabThread` handle for high-frequency reads (positions, velocity, interaction
 flags/partners, stage tags, enjoyment) — an OStim backend must give their
 director-equivalents the same data or these reads must move behind the director
 API first. `SLOVE_Resistance` additionally resolves the Director alias and the
 SexLab quest by FormID at runtime (no CK-filled properties).
+
+**`SLOVE_Voice` is UNIFIED** (0.6.20): its port leak is resolved — every SexLab
+read goes through the director API, one source/one pex serves both variants
+from the FOMOD Core, and `papyrus\classic\Source` deliberately carries no copy.
+The unification added to both directors: `GetThreadID()`, `HasSubmissives()`,
+`GetPenisActionLabelAtPos(pos)` (the per-position label whose
+`SLOVE_Hentairim_Tags` signature is annotation-scheme-specific), and folded the
+classic SLSO `GetFullEnjoyment()` merge into the classic director's
+`GetEnjoyment` — it is framework truth, not voice policy, so every consumer of
+`GetEnjoyment` now gets the honest value. The build's `Assert-VariantTypes`
+fails if a direct framework type ever reappears in the unified pex, or if a
+stale `SLOVE_Voice.pex` shows up in `dist-classic` (it would shadow the Core
+copy). `SLOVE_NpcScene` stays duplicated on purpose: it tracks NPC scenes on
+its own thread handle, and the director API answers only for the PC's scene.

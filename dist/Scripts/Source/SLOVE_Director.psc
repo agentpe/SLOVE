@@ -2072,6 +2072,30 @@ int Function GetGender(actor char)
 	return sexlab.GetGender(char)
 EndFunction
 
+int Function GetThreadID()
+	if !CurrentThread
+		return -1
+	endif
+	return CurrentThread.GetThreadID()
+EndFunction
+
+bool Function HasSubmissives()
+	if !CurrentThread
+		return false
+	endif
+	return CurrentThread.GetSubmissives().length > 0
+EndFunction
+
+;the per-position PenisAction label for the CURRENT scene/stage - what Voice
+;reads for actors other than the lead (titfuck/handjob/footjob-others
+;detection). Lives here because the SLOVE_Hentairim_Tags signature is
+;annotation-scheme-specific (string scene id on P+, sslBaseAnimation on
+;classic), which was the last direct label call keeping SLOVE_Voice
+;framework-bound.
+string Function GetPenisActionLabelAtPos(int position)
+	return SLOVE_Hentairim_Tags.PenisActionLabel(currentSceneID, CurrentStageNum, position)
+EndFunction
+
 Bool Function PCInSex()
 	return PCInSex
 EndFunction

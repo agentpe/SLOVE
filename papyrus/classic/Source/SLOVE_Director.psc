@@ -1665,10 +1665,35 @@ int Function GetPositionIdx(actor char)
 	return CurrentThread.Positions.Find(char)
 EndFunction
 
+Int SLSOReadyCache = 0 ;0 = unknown, 1 = SLSO present, -1 = absent (lazy, cached once)
+
+;SLSO's minigame pins SexLab's GetEnjoyment() at 0 for the whole scene and keeps
+;the live meter in the alias's GetFullEnjoyment() - the value SLSO's own voice
+;reads (SLSO_SpellVoiceScript). Read that meter when SLSO is present; fall back
+;to GetEnjoyment() when SLSO is absent or the meter is still 0 (lead-in /
+;passive setups). Lived in SLOVE_Voice until the variant unification - it is
+;framework truth, not voice policy, so it belongs behind the adapter seam where
+;every consumer of GetEnjoyment gets the honest value.
 int Function GetEnjoyment(actor char)
 	if !CurrentThread
 		return 0
 	endif
+	If SLSOReadyCache == 0
+		If isDependencyReady("SLSO.esp")
+			SLSOReadyCache = 1
+		Else
+			SLSOReadyCache = -1
+		EndIf
+	EndIf
+	If SLSOReadyCache == 1
+		sslActorAlias al = CurrentThread.ActorAlias(char)
+		If al
+			Int full = al.GetFullEnjoyment()
+			If full > 0
+				Return full
+			EndIf
+		EndIf
+	EndIf
 	return CurrentThread.GetEnjoyment(char)
 EndFunction
 
@@ -1717,6 +1742,30 @@ EndFunction
 
 int Function GetGender(actor char)
 	return sexlab.GetGender(char)
+EndFunction
+
+int Function GetThreadID()
+	if !CurrentThread
+		return -1
+	endif
+	return CurrentThread.tid
+EndFunction
+
+bool Function HasSubmissives()
+	if !CurrentThread
+		return false
+	endif
+	return CurrentThread.Victims.length > 0
+EndFunction
+
+;the per-position PenisAction label for the CURRENT scene/stage - what Voice
+;reads for actors other than the lead (titfuck/handjob/footjob-others
+;detection). Lives here because the SLOVE_Hentairim_Tags signature is
+;annotation-scheme-specific (string scene id on P+, sslBaseAnimation on
+;classic), which was the last direct label call keeping SLOVE_Voice
+;framework-bound.
+string Function GetPenisActionLabelAtPos(int position)
+	return SLOVE_Hentairim_Tags.PenisActionLabel(CurrentAnimation, CurrentStageNum, position)
 EndFunction
 
 Bool Function PCInSex()

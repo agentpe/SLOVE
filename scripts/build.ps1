@@ -5,11 +5,14 @@
 #   .\scripts\build.ps1 -Variant Classic  # classic-SexLab scripts only
 #   .\scripts\build.ps1 -NoFomod          # skip FOMOD packaging
 #
-# SLO VE ships two script sets that differ only in the six framework-facing
-# scripts (Director, Voice, SFX, Expressions, Resistance, Hentairim_Tags):
+# SLO VE ships two script sets that differ only in the framework-facing scripts
+# (Director, SFX, Expressions, Resistance, Hentairim_Tags, NpcScene, ThreadHook):
 #   papyrus\Source          -> SexLab Framework P+ 2.x   (default, -> dist)
 #   papyrus\classic\Source  -> SexLab SE 1.63 + SLSO     (-> dist-classic)
-# The other four scripts are framework-free and ship once, from papyrus\Source.
+# Everything else - SLOVE_Voice included since the variant unification - is
+# framework-free and ships once, from papyrus\Source: Voice reads SexLab only
+# through SLOVE_Director's adapter API, so ONE compiled pex (in the FOMOD Core)
+# serves both variants. Assert-VariantTypes enforces that it stays that way.
 #
 # Overrides: PYRO_EXE, SKYRIM_GAME_PATH, SLOVE_BUILD_FOLDER.
 param(
@@ -90,7 +93,8 @@ function Build-Classic {
     $ppj = Invoke-StrictReplace $ppj '<Folder>.\papyrus\Source</Folder>' '<Folder>.\papyrus\classic\Source</Folder>'
 
     # resolve classic scripts first, then fall through to papyrus\Source for the
-    # four framework-free scripts (Config, Log, Test, VoiceCategories)
+    # framework-free scripts (Config, Log, Test, VoiceCategories - and SLOVE_Voice,
+    # which is unified: classic has no copy, so the compiler resolves the shared one)
     $ppj = Invoke-StrictReplace $ppj '<Import>.\papyrus\Source</Import>' `
                          "<Import>.\papyrus\classic\Source</Import>`n        <Import>.\papyrus\Source</Import>"
 
@@ -124,7 +128,7 @@ function Build-Classic {
 # every build; checks whichever dist trees exist, so stale leftovers are caught
 # even when only one variant was rebuilt.
 function Assert-VariantTypes {
-    $variantScripts = @('SLOVE_Director', 'SLOVE_Voice', 'SLOVE_SFX',
+    $variantScripts = @('SLOVE_Director', 'SLOVE_SFX',
                         'SLOVE_Expressions', 'SLOVE_Resistance', 'SLOVE_Hentairim_Tags')
     # dist tree -> type that must NOT appear in its pexes
     $forbidden = @{ 'dist' = 'sslBaseAnimation'; 'dist-classic' = 'SexLabThread' }
@@ -139,18 +143,43 @@ function Assert-VariantTypes {
             }
         }
     }
+
+    # Unified scripts (one pex serves both variants from the FOMOD Core) must be
+    # FRAMEWORK-FREE: any direct SexLab type reference means someone bypassed the
+    # Director adapter and the single pex would break one of the two frameworks.
+    # A stale copy in dist-classic is just as fatal - the FOMOD's ClassicScripts
+    # overlay would shadow the unified Core pex with an outdated build.
+    $unifiedScripts = @('SLOVE_Voice')
+    $frameworkTypes = @('SexLabThread', 'sslBaseAnimation', 'sslThreadController',
+                        'SexlabRegistry', 'sslActorAlias')
+    foreach ($s in $unifiedScripts) {
+        $pex = Join-Path $root "dist\Scripts\$s.pex"
+        if (Test-Path $pex) {
+            $text = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($pex))
+            foreach ($t in $frameworkTypes) {
+                if ($text.IndexOf($t, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                    $bad += "dist\Scripts\$s.pex references $t - unified script must stay framework-free (route the call through SLOVE_Director)"
+                }
+            }
+        }
+        if (Test-Path (Join-Path $root "dist-classic\Scripts\$s.pex")) {
+            $bad += "dist-classic\Scripts\$s.pex exists - $s is unified; delete it or the FOMOD ships a stale shadow over the Core copy"
+        }
+    }
+
     if ($bad) {
         throw ("variant type check FAILED:`n  " + ($bad -join "`n  ") +
                "`nDelete the offending .pex files and rebuild (Pyro's incremental build preserves stale outputs).")
     }
-    Write-Host 'variant type check OK (no cross-variant pex contamination)' -ForegroundColor Green
+    Write-Host 'variant type check OK (no cross-variant contamination; unified scripts framework-free)' -ForegroundColor Green
 }
 
 # ------------------------------------------------------------ FOMOD package ---
 # Release\FOMOD\
 #   fomod\{info,ModuleConfig}.xml
-#   Core\            <- the whole dist tree (P+ scripts are the default set)
-#   ClassicScripts\  <- the six classic .pex + sources, installed over Core
+#   Core\            <- the whole dist tree (P+ scripts are the default set;
+#                       unified scripts like SLOVE_Voice serve BOTH variants)
+#   ClassicScripts\  <- the classic .pex + sources, installed over Core
 function Build-Fomod {
     Write-Host '=== Assembling FOMOD ===' -ForegroundColor Cyan
     $stage = Join-Path $root 'Release\FOMOD'
@@ -167,7 +196,7 @@ function Build-Fomod {
     # never ship stray backups
     Get-ChildItem $core -Recurse -Filter '*.bak-*' -ErrorAction SilentlyContinue | Remove-Item -Force
 
-    # ClassicScripts = the six overrides
+    # ClassicScripts = the classic overrides
     $classicDist = Join-Path $root 'dist-classic\Scripts'
     if (Test-Path $classicDist) {
         $cs = Join-Path $stage 'ClassicScripts\Scripts'

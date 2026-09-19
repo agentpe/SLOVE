@@ -1112,6 +1112,11 @@ String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String ac
 		place = actPlace
 		if dir == "rcv" && place == "oral"
 			imp = LeadImplement() ;someone's mouth is on HER - the implement is hers
+		elseif place == "oral" && (IsCunnilingus() || IsRimming())
+			;her mouth is on someone but nothing penetrates it - the same answer the
+			;IsCunnilingus() || IsRimming() branch below gives. OralLabel is ONE label,
+			;so this can never be a blowjob, which does carry the partner's implement.
+			imp = ""
 		else
 			imp = PartnerImplement()
 		endif
@@ -1923,13 +1928,13 @@ Function PlayRimjob()
 	;layouts. A pack without them degrades through the config alias/fallback layer to
 	;its own Licking*/Blowjob* audio, then stock (see SLOVE_voices.toml).
 	if MasterScript.HasSceneTag("Forced") || femaleisvictim()
-		PlaySound("RimjobForced", mainFemaleActor, debugtext = "Rimjob Forced")
+		PlaySound("RimjobForced", mainFemaleActor, debugtext = "Rimjob Forced", actDir = "giv", actPlace = "oral")
 	elseif Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !ASLIsBroken()
-		PlaySound("RimjobComments", mainFemaleActor, debugtext = "Rimjob Comments")
+		PlaySound("RimjobComments", mainFemaleActor, debugtext = "Rimjob Comments", actDir = "giv", actPlace = "oral")
 	elseif ASLcurrentlyIntense
-		PlaySound("RimjobIntense", mainFemaleActor, debugtext = "Rimjob Intense")
+		PlaySound("RimjobIntense", mainFemaleActor, debugtext = "Rimjob Intense", actDir = "giv", actPlace = "oral")
 	else
-		PlaySound("Rimjob", mainFemaleActor, debugtext = "Rimjob")
+		PlaySound("Rimjob", mainFemaleActor, debugtext = "Rimjob", actDir = "giv", actPlace = "oral")
 	endif
 
 endfunction
@@ -1943,13 +1948,13 @@ Function PlayCunnilingus()
 	;the config alias/fallback layer to its own Blowjob* audio, then stock (see
 	;SLOVE_voices.toml). Comments reuse the blowjob comment chance - same beat.
 	if MasterScript.HasSceneTag("Forced") || femaleisvictim()
-		PlaySound("LickingForced", mainFemaleActor, debugtext = "Licking Forced")
+		PlaySound("LickingForced", mainFemaleActor, debugtext = "Licking Forced", actDir = "giv", actPlace = "oral")
 	elseif Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !ASLIsBroken()
-		PlaySound("LickingComments", mainFemaleActor, debugtext = "Licking Comments")
+		PlaySound("LickingComments", mainFemaleActor, debugtext = "Licking Comments", actDir = "giv", actPlace = "oral")
 	elseif ASLcurrentlyIntense
-		PlaySound("LickingIntense", mainFemaleActor, debugtext = "Licking Intense")
+		PlaySound("LickingIntense", mainFemaleActor, debugtext = "Licking Intense", actDir = "giv", actPlace = "oral")
 	else
-		PlaySound("Licking", mainFemaleActor, debugtext = "Licking")
+		PlaySound("Licking", mainFemaleActor, debugtext = "Licking", actDir = "giv", actPlace = "oral")
 	endif
 
 endfunction
@@ -2084,21 +2089,21 @@ Function PlayBlowjob()
 
 	if VoiceVariation == "A"
 		if Utility.RandomFloat(0.0, 1.0) <= ChanceToCommentonBlowjobStage && ASLcurrentlyIntense
-			PlaySound("AppreciatePartner", mainFemaleActor, debugtext = "AppreciatePartner")
+			PlaySound("AppreciatePartner", mainFemaleActor, debugtext = "AppreciatePartner", actDir = OralDir(), actPlace = "oral")
 		elseif Utility.RandomFloat(0.0, 1.0) <= ChanceToCommentonBlowjobStage && !femaleisvictim() && !ASLIsBroken() && !ASLcurrentlyIntense
-			PlaySound("BlowjobRemarks", mainFemaleActor, debugtext = "BlowjobRemarks")
+			PlaySound("BlowjobRemarks", mainFemaleActor, debugtext = "BlowjobRemarks", actDir = OralDir(), actPlace = "oral")
 		elseif ASLcurrentlyIntense
-			PlaySound("BlowjobActionIntense", mainFemaleActor, debugtext = "BlowjobActionIntense")
+			PlaySound("BlowjobActionIntense", mainFemaleActor, debugtext = "BlowjobActionIntense", actDir = OralDir(), actPlace = "oral")
 		else
-			PlaySound("BlowjobActionSoft", mainFemaleActor, debugtext = "BlowjobActionSoft")
+			PlaySound("BlowjobActionSoft", mainFemaleActor, debugtext = "BlowjobActionSoft", actDir = OralDir(), actPlace = "oral")
 		endif
 	else
 		if Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !femaleisvictim() && !ASLIsBroken()
-			PlaySound("BlowjobRemarks", mainFemaleActor, debugtext = "BlowjobRemarks")
+			PlaySound("BlowjobRemarks", mainFemaleActor, debugtext = "BlowjobRemarks", actDir = OralDir(), actPlace = "oral")
 		elseif ASLcurrentlyIntense
-			PlaySound("BlowjobActionIntense", mainFemaleActor, debugtext = "BlowjobActionIntense")
+			PlaySound("BlowjobActionIntense", mainFemaleActor, debugtext = "BlowjobActionIntense", actDir = OralDir(), actPlace = "oral")
 		else
-			PlaySound("BlowjobActionSoft", mainFemaleActor, debugtext = "BlowjobActionSoft")
+			PlaySound("BlowjobActionSoft", mainFemaleActor, debugtext = "BlowjobActionSoft", actDir = OralDir(), actPlace = "oral")
 		endif
 	endif
 
@@ -2112,23 +2117,23 @@ Function PlayBlowjobVarB()
 	if Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !femaleisvictim() && !ASLIsBroken()
 		if MasterScript.HasSceneTag("Forced") || IsgettingPenetrated()
 			;Blowjob Forced Comments
-			PlaySound("NoticeMaleWantsMore", mainFemaleActor, debugtext = "Blowjob Forced Comments")
+			PlaySound("NoticeMaleWantsMore", mainFemaleActor, debugtext = "Blowjob Forced Comments", actDir = OralDir(), actPlace = "oral")
 		elseif ASLcurrentlyIntense
 			;Blowjob Comments Intense
-			PlaySound("AppreciatePartner", mainFemaleActor, debugtext = "Blowjob Comments Intense")
+			PlaySound("AppreciatePartner", mainFemaleActor, debugtext = "Blowjob Comments Intense", actDir = OralDir(), actPlace = "oral")
 		else
 			;Blowjob Comments
-			PlaySound("BlowjobRemarks", mainFemaleActor, debugtext = "Blowjob Comments")
+			PlaySound("BlowjobRemarks", mainFemaleActor, debugtext = "Blowjob Comments", actDir = OralDir(), actPlace = "oral")
 		endif
 	elseif MasterScript.HasSceneTag("Forced") || IsgettingPenetrated()
 		;Blowjob Forced
-		PlaySound("AskForAnal", mainFemaleActor, debugtext = "Blowjob Forced")
+		PlaySound("AskForAnal", mainFemaleActor, debugtext = "Blowjob Forced", actDir = OralDir(), actPlace = "oral")
 	elseif ASLcurrentlyIntense
 		;Blowjob Action Intense
-		PlaySound("BlowjobActionIntense", mainFemaleActor, debugtext = "Blowjob Action Intense")
+		PlaySound("BlowjobActionIntense", mainFemaleActor, debugtext = "Blowjob Action Intense", actDir = OralDir(), actPlace = "oral")
 	else
 		;Blowjob Action
-		PlaySound("BlowjobActionSoft", mainFemaleActor, debugtext = "Blowjob Action")
+		PlaySound("BlowjobActionSoft", mainFemaleActor, debugtext = "Blowjob Action", actDir = OralDir(), actPlace = "oral")
 	endif
 
 	If femaleCloseToOrgasm() && IsgettingPenetrated() ;When female close to orgasm
@@ -2848,7 +2853,7 @@ function ASLPlayMaleClosetoOrgasmComments()
 		return
 	endif
 	;Teasing Male Close to Orgasm
-	if IsStimulatingOthers() && !IsgettingPenetrated() && !IsGettingStimulated() && IsVoicedMale(mainMaleActor) ;male or schlonged futa (was P+ getsex 0/2; classic plain male) - the unified predicate
+	if IsStimulatingOthers() && !IsgettingPenetrated() && !IsGettingStimulated() && HasCock(mainMaleActor) ;a partner who can FINISH: male, MALE CREATURE or schlonged futa. IsVoicedMale answers "can speak", and HasSchlong rejects gender>1, so unifying on it dropped the old getsex==2 arm and every beast partner silently lost this beat
 
 		PlaySound("ReadyToGetGoing", mainFemaleActor, debugtext = "ReadyToGetGoing")
 
@@ -2886,7 +2891,7 @@ endfunction
 
 function ASLPlayMaleClosetoOrgasmCommentsVarB()
 
-	if !FemaleIsVictim() && IsStimulatingOthers() && !IsgettingPenetrated() && IsVoicedMale(mainMaleActor) ;male or schlonged futa - see the twin gate above
+	if !FemaleIsVictim() && IsStimulatingOthers() && !IsgettingPenetrated() && HasCock(mainMaleActor) ;a partner who can FINISH - see the twin gate above
 		if IsGettingStimulated()
 			PlaySound("ReadyToGetGoing", mainFemaleActor, debugtext = "Ready To Get Going")
 		else
@@ -2900,28 +2905,41 @@ function ASLPlayMaleClosetoOrgasmCommentsVarB()
 	elseif IsFemdom() && IsgettingPenetrated()
 		;Male Orgasm Soon Femdom
 		PlaySound("MaleCloseNotice", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Femdom")
+	;Branch on the ACT, not on a penetration level the arm below has already
+	;excluded: under IsgettingPenetrated(), CurrentPenetrationLvl() answers anal (3)
+	;or vaginal (2) before it ever reaches its oral case, so both of its == 1 arms
+	;were dead and this beat reached Variation A only (its other call site,
+	;PossiblyAskForCumInSpecificLocation, sits under a VarB router that returns).
+	;Oral first mirrors the dispatch chain, which also answers oral before the hole.
+	elseif !femaleisvictim() && (IsSuckingoffOther() || IsGettingSuckedoff())
+		;Male Orgasm Soon Ask For Oral Cum
+		PlaySound("AskForOralCum", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Oral Cum", actDir = OralDir(), actPlace = "oral")
 	elseif	!femaleisvictim() && IsgettingPenetrated()
 		if Isintense()
-			if CurrentPenetrationLvl() == 1
-				;Male Orgasm Soon Ask For Oral Cum
-				PlaySound("AskForOralCum", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Oral Cum")
-			elseif CurrentPenetrationLvl() == 2
+			if CurrentPenetrationLvl() == 2
 				;Male Orgasm Soon Ask For Vaginal Cum Intense
 				PlaySound("TeaseMaleCloseToOrgasmSoft", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Vaginal Cum Intense")
 			elseif CurrentPenetrationLvl() == 3
 				;Male Orgasm Soon Ask for Anal Cum Intense
 				PlaySound("TeaseMaleCloseToOrgasmIntense", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Anal Cum Intense")
+			else
+				;level 0: CurrentPenetrationLvl() answers 0 whenever the stage is LDI or
+				;she is stimulating someone, both of which coincide with penetration.
+				;Without this the arm was entered and played nothing. debugtext == the
+				;category, so no B remap - it falls through the alias/fallback ladder
+				;like the A twin's neutral penetrated beat.
+				PlaySound("TeaseMaleCloseToOrgasmIntense", mainFemaleActor, soundPriority = 1 , debugtext = "TeaseMaleCloseToOrgasmIntense")
 			EndIf
 		else
-			if CurrentPenetrationLvl() == 1
-				;Male Orgasm Soon Ask For Oral Cum
-				PlaySound("AskForOralCum", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Oral Cum")
-			elseif CurrentPenetrationLvl() == 2
+			if CurrentPenetrationLvl() == 2
 				;Male Orgasm Soon Ask For Vaginal Cum
 				PlaySound("AskForVaginalCum", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Vaginal Cum")
 			elseif CurrentPenetrationLvl() == 3
 				;Male Orgasm Soon Ask For Anal Cum
 				PlaySound("AskForAnalCum", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Anal Cum")
+			else
+				;level 0 under penetration - see the intense twin above
+				PlaySound("TeaseMaleCloseToOrgasmSoft", mainFemaleActor, soundPriority = 1 , debugtext = "TeaseMaleCloseToOrgasmSoft")
 			EndIf
 		endif
 	elseif !femaleisvictim() && IsStimulatingOthers()
@@ -3265,7 +3283,7 @@ Function ASLPlayStageTransition()
 
 				PlaySound("TeaseAggressivePartner", mainFemaleActor, debugtext="TeaseAggressivePartner")
 
-			elseif femaleisvictim() && Utility.RandomFloat(0.5, 1.0) < 0.5
+			elseif femaleisvictim() && Utility.RandomFloat(0.0, 1.0) < 0.5
 
 				PlaySound("Unamused", mainFemaleActor, debugtext="Unamused")
 			elseif IsGettingAnallyPenetrated()
@@ -3707,7 +3725,6 @@ Function UpdateLabels(int actorpos = 0)
 			elseif Result == "SHJ"
 				isHandjobOthers = true
 				printdebug("isHandjobOthers TRUE")
-				printdebug("IsGivingOthersIntenseStimulation TRUE")
 			elseif Result == "FHJ"
 				isHandjobOthers = true
 				IsGivingOthersIntenseStimulation = true

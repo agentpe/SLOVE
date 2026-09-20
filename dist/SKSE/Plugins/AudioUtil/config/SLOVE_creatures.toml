@@ -1,0 +1,619 @@
+# SLO VE - creature voice slots C11-C41 (species coverage beyond SLOVE_voices.toml)
+#
+# Additive AudioUtil overlay. SLOVE_voices.toml owns C0-C10 (werewolf, draugr,
+# falmer, troll, giant, wolf, dog, chaurus, spriggan, horse) and the generic C0
+# catch-all; this file extends the same scheme to another 31 species and adds the
+# race hints that route them. No slot id and no race hint is shared between the
+# two files, so the merge is purely additive - order does not matter.
+#
+# Every slot is built the same way as C0-C10: vanilla (or More Nasty Critters)
+# sound files named as an explicit file list, because folder SCANS cannot see
+# BSA-packed audio - only an explicit list resolves through the engine's loader.
+#
+# DEPENDENCY: the fox (C19) and dragon (C28) slots are sourced ENTIRELY from
+# More Nasty Critters, and the lurker (C23) and hagraven (C27) slots mostly so.
+# Without MNC installed those categories resolve nothing - which is why every
+# slot here carries fallback = "C0", so a missing file degrades to the generic
+# creature growls instead of to silence.
+
+[race_map]
+DLC1DeathHoundRace = "C6"
+DLC2RieklingRace = "C11"
+SkeletonArmorRace = "C12"
+SkeletonRace = "C12"
+FrostbiteSpiderRace = "C13"
+FrostbiteSpiderRaceGiant = "C13"
+SkeeverRace = "C14"
+HorkerRace = "C15"
+BearBlackRace = "C16"
+BearSnowRace = "C16"
+'Cave Bear' = "C16"
+'Snow Bear' = "C16"
+SabreCatRace = "C17"
+DLC2BoarRace = "C18"
+DLC2MountedRieklingRace = "C41"
+FoxRace = "C19"
+DeerRace = "C20"
+DLC1GargoyleRace = "C21"
+GoatRace = "C22"
+DLC2LurkerRace = "C23"
+MammothRace = "C24"
+DLC1VampireBeastRace = "C25"
+DLC2AshHopperRace = "C26"
+HagravenRace = "C27"
+DragonRace = "C28"
+Netch = "C29"
+DLC2AshSpawnRace = "C30"
+DLC2SeekerRace = "C31"
+AtronachFlameRace = "C32"
+AtronachFrostRace = "C33"
+AtronachStormRace = "C34"
+DragonPriestRace = "C35"
+DwarvenCenturionRace = "C36"
+DwarvenSphereRace =  "C37"
+DwarvenSpiderRace =  "C38"
+IcewraithRace = "C39"
+SlaughterfishRace = "C40"
+SprigganmatronRace = "C9"
+DLC2SprigganBurntRace = "C9"
+
+[[slot]]
+id = "C11"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\riekling\death\npc_riekling_death_04.wav',
+	'sound\fx\dlc02\npc\riekling\death\npc_riekling_death_03.wav',
+	'sound\fx\dlc02\npc\riekling\attackpowerforward\npc_riekling_attackpowerforward_05.wav',
+	'sound\fx\dlc02\npc\riekling\attackpowerforward\npc_riekling_attackpowerforward_03.wav'
+]
+Breathing = [
+	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_01_lp.wav',
+	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_02_lp.wav',
+	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_03_lp.wav'
+]
+
+[[slot]]
+id = "C12"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\skeleton\combatidle\npc_skeleton_combatidle_2gstaunta_01.wav',
+	'sound\fx\npc\skeleton\combatidle\npc_skeleton_combatidle_1hmtaunta_01.wav',
+]
+Breathing = [
+	'sound\fx\npc\skeleton\npc_skeleton_conscious_01_lp.wav',
+	'sound\fx\npc\skeleton\npc_skeleton_conscious_02_lp.wav',
+	'sound\fx\npc\skeleton\attack\npc_skeleton_attack_01.wav',
+	'sound\fx\npc\skeleton\attack\npc_skeleton_attack_02.wav',
+	'sound\fx\npc\skeleton\attack\npc_skeleton_attack_03.wav'
+]
+
+[[slot]]
+id = "C13"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\spiderhand\eggsack\npc_spiderhand_eggsack_01_lp.wav',
+	'sound\fx\dlc02\npc\spiderhand\eggsack\npc_spiderhand_eggsack_02_lp.wav',
+	'sound\fx\dlc02\npc\spiderhand\eggsack\npc_spiderhand_eggsack_03_lp.wav',
+	'sound\fx\npc\spiderfrostbite\attack\spit\npc_spiderfrostbite_attackspit_01.wav',
+	'sound\fx\npc\spiderfrostbite\attack\spit\npc_spiderfrostbite_attackspit_02.wav'
+	]
+Breathing = [
+	'sound\fx\dlc02\npc\spiderhand\idle\npc_spiderhand_idle_01.wav',
+	'sound\fx\dlc02\npc\spiderhand\idle\npc_spiderhand_idle_02.wav',
+	'sound\fx\dlc02\npc\spiderhand\idle\npc_spiderhand_idle_03.wav',
+	'sound\fx\dlc02\npc\spiderhand\idle\npc_spiderhand_idle_04.wav',
+	'sound\fx\dlc02\npc\spiderhand\idle\npc_spiderhand_idle_05.wav',
+	'sound\fx\npc\spiderfrostbite\npc_spiderfrostbite_breathe_lp.wav',
+	'sound\fx\npc\spiderfrostbite\attack\a\npc_spiderfrostbite_attack_a_01.wav',
+	'sound\fx\npc\spiderfrostbite\attack\a\npc_spiderfrostbite_attack_a_02.wav'
+]
+
+[[slot]]
+id = "C14"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\skeever\attack\npc_skeever_attack_01.wav',
+	'sound\fx\npc\skeever\attack\npc_skeever_attack_02.wav',
+	'sound\fx\npc\skeever\attack\npc_skeever_attack_03.wav',
+	'sound\fx\npc\skeever\injured\npc_skeever_injured_02.wav'
+]
+Breathing = [
+	'sound\fx\npc\skeever\breathelp\npc_skeever_breathe_01_lp.wav',
+	'sound\fx\npc\skeever\breathelp\npc_skeever_breathe_02_lp.wav',
+	'sound\fx\npc\skeever\breathelp\npc_skeever_breathe_03_lp.wav'
+]
+
+[[slot]]
+id = "C15"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\horker\npc_horker_aggrowarning_01.wav',
+	'sound\fx\npc\horker\injured\npc_horker_injured_02.wav',
+	'sound\fx\npc\horker\injured\npc_horker_injured_03.wav'
+]
+Breathing = [
+	'sound\fx\npc\horker\attackpowerstanding\npc_horker_attackpowerstanding_01.wav',
+	'sound\fx\npc\horker\attackpowerstanding\npc_horker_attackpowerstanding_02.wav',
+	'sound\fx\npc\horker\attackpowerstanding\npc_horker_attackpowerstanding_03.wav',
+	'sound\fx\npc\horker\attackpowerforward\npc_horker_attackpowerforward_01.wav',
+	'sound\fx\npc\horker\attackpowerforward\npc_horker_attackpowerforward_02.wav'	
+]
+
+[[slot]]
+id = "C16"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\bear\attack\npc_yaoguai_attackswing_01.wav',
+	'sound\fx\npc\bear\attack\npc_yaoguai_attackswing_02.wav',
+	'sound\fx\npc\bear\death\npc_bear_death_02.wav',
+	'sound\fx\npc\bear\npc_bear_aggrowarning_02.wav'
+]
+Breathing = [
+	'sound\fx\npc\bear\npc_bear_conscious_lp.wav',
+	'sound\fx\npc\bear\attack\a\npc_bear_attack_a_02.wav',
+	'sound\fx\npc\bear\attack\a\npc_bear_attack_a_03.wav',
+	'sound\fx\npc\bear\attack\b\npc_bear_attack_b_03.wav',
+	'sound\fx\npc\bear\npc_bear_idlerooting_01.wav'
+]
+
+[[slot]]
+id = "C17"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\sabrecat\attack\npc_sabrecat_attackleft2_01.wav',
+	'sound\fx\npc\sabrecat\attack\npc_sabrecat_attackright2_01.wav',
+	'sound\fx\npc\sabrecat\attack\npc_sabrecat_attackright2a_01.wav'
+]
+Breathing = [
+	'sound\fx\npc\sabrecat\npc_sabrecat_breathe_lp.wav',
+	'sound\fx\npc\sabrecat\npc_sabrecat_aggrowarning_01.wav',
+	'sound\fx\npc\sabrecat\npc_sabrecat_aggrowarning_02.wav',
+	'sound\fx\npc\sabrecat\npc_sabrecat_idlecombat_01.wav',
+	'sound\fx\npc\sabrecat\npc_sabrecat_idlecombat_02.wav'
+]
+
+[[slot]]
+id = "C18"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\bristleback\attack\a\npc_bristleback_attack_a_01.wav',
+	'sound\fx\dlc02\npc\bristleback\death\npc_bristleback_death_03.wav',
+	'sound\fx\dlc02\npc\bristleback\death\npc_bristleback_death_02.wav'
+]
+Breathing = [
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_01_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_02_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_03_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\recoil\npc_bristleback_recoil_snort_a_01.wav'
+]
+
+[[slot]]
+id = "C19"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'Sound\MNC\Fox\Hot Sounds\FoxHot1.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot2.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot3.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot4.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot5.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot6.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot7.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot8.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot9.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot10.wav',
+	'Sound\MNC\Fox\Hot Sounds\FoxHot11.wav'
+]
+Breathing = [
+	'Sound\MNC\Fox\Mild Sounds\FoxMild1.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild2.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild3.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild4.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild5.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild6.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild7.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild8.wav',
+	'Sound\MNC\Fox\Mild Sounds\FoxMild9.wav',
+	'Sound\MNC\Fox\Medium Sounds\FoxMedium1.wav'
+]
+
+[[slot]]
+id = "C20"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\elk\aggrowarning\npc_deer_aggrowarning_01.wav',
+	'sound\fx\npc\elk\aggrowarning\npc_deer_aggrowarning_02.wav',
+	'sound\fx\npc\elk\aggrowarning\npc_deer_aggrowarning_03.wav'
+]
+Breathing = [
+	'sound\fx\npc\elk\npc_elk_breathe_01_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_02_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_03_lp.wav'
+]
+
+[[slot]]
+id = "C21"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc01\npc\gargoyle\death\npc_gargoyle_death_02.wav',
+	'sound\fx\dlc01\npc\gargoyle\npc_gargoyle_warning_scream_02.wav'
+]
+Breathing = [
+	'sound\fx\dlc01\npc\gargoyle\dlc01_npc_gargoyle_conscious_lp.wav',
+	'sound\fx\dlc01\npc\gargoyle\attack\npc_gargoyle_attack_03.wav',
+	'sound\fx\dlc01\npc\gargoyle\attack\npc_gargoyle_attack_02.wav',
+	'sound\fx\dlc01\npc\gargoyle\attack\npc_gargoyle_attack_power_dash_01.wav',
+	'sound\fx\dlc01\npc\gargoyle\attack\npc_gargoyle_forward_power_attack_03.wav'
+]
+
+[[slot]]
+id = "C22"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\goat\death\npc_goat_death_02.wav',
+	'sound\fx\npc\goat\attack\b\npc_goat_attack_b_01.wav',
+	'sound\fx\npc\goat\attack\b\npc_goat_attack_b_02.wav'
+]
+Breathing = [
+	'sound\fx\npc\goat\bleat\npc_goat_bleat_01.wav',
+	'sound\fx\npc\goat\bleat\npc_goat_bleat_02.wav',
+	'sound\fx\npc\goat\bleat\npc_goat_bleat_03.wav',
+	'sound\fx\npc\goat\attack\a\npc_goat_attack_a_01.wav',
+	'sound\fx\npc\goat\attack\a\npc_goat_attack_a_02.wav'
+]
+
+[[slot]]
+id = "C23"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'Sound\MNC\Lurker\Hot Sounds\LurkerHot1.wav',
+	'Sound\MNC\Lurker\Hot Sounds\LurkerHot2.wav',
+	'sound\fx\dlc02\npc\fishman\attack\npc_fishman_attack_spit_01.wav',
+	'sound\fx\dlc02\npc\fishman\attack\npc_fishman_attack_spit_02.wav',
+	'sound\fx\dlc02\npc\fishman\attack\npc_fishman_aggrowarning_02.wav'
+]
+Breathing = [
+	'Sound\MNC\Lurker\Medium Sounds\LurkerMedium1.wav',
+	'Sound\MNC\Lurker\Medium Sounds\LurkerMedium2.wav',
+	'Sound\MNC\Lurker\Medium Sounds\LurkerMedium3.wav',
+	'Sound\MNC\Lurker\Medium Sounds\LurkerMedium4.wav',
+	'sound\fx\dlc02\npc\fishman\npc_fishman_conscious_01_lp.wav'
+]
+
+[[slot]]
+id = "C24"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\mammoth\injured\npc_mammoth_injured_03.wav',
+	'sound\fx\npc\mammoth\attack\b\npc_mammoth_attack_b_02.wav',
+	'sound\fx\npc\mammoth\attack\b\npc_mammoth_attack_b_01.wav',
+	'sound\fx\npc\mammoth\npc_mammoth_aggrowarning_02.wav'
+]
+Breathing = [
+	'sound\fx\npc\mammoth\attack\a\npc_mammoth_attack_a_02.wav',
+	'sound\fx\npc\mammoth\attack\a\npc_mammoth_attack_a_01.wav',
+	'sound\fx\npc\mammoth\npc_mammoth_conscious_lp.wav'
+]
+
+[[slot]]
+id = "C25"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc01\npc\vampirelord\npc_vampirelord_transformation_02_3d.wav',
+	'sound\fx\dlc01\npc\vampirelord\npc_vampirelord_feedfront_01.wav'
+]
+Breathing = [
+	'sound\fx\dlc01\npc\vampirelord\npc_vampirelord_breathe_lp.wav',
+	'sound\fx\dlc01\npc\troll\follower\npc_troll_follower_inquisitive_01.wav',
+	'sound\fx\dlc01\npc\troll\follower\npc_troll_follower_inquisitive_02.wav',
+	'sound\fx\dlc01\npc\vampirelord\npc_vampirelord_attack_right_01.wav'
+]
+
+[[slot]]
+id = "C26"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\scrib\npc_scrib_ambush_digin_02.wav',
+	'sound\fx\dlc02\npc\scrib\npc_scrib_ambush_digout_02.wav',
+	'sound\fx\dlc02\npc\scrib\npc_scrib_attackpowerforward_01.wav'
+]
+Breathing = [
+	'sound\fx\dlc02\npc\scrib\npc_scrib_breathe_lp.wav',
+	'sound\fx\dlc02\npc\scrib\npc_scrib_idle2_01.wav'
+]
+
+[[slot]]
+id = "C27"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'Sound\MNC\Hagraven\Hot Sounds\HagravenHot1.wav',
+	'Sound\MNC\Hagraven\Hot Sounds\HagravenHot2.wav',
+	'Sound\MNC\Hagraven\Hot Sounds\HagravenHot3.wav',
+	'Sound\MNC\Hagraven\Hot Sounds\HagravenHot4.wav',
+	'Sound\MNC\Hagraven\Hot Sounds\HagravenHot5.wav',
+	'Sound\MNC\Hagraven\Hot Sounds\HagravenHot6.wav',
+	'Sound\MNC\Hagraven\Hot Sounds\HagravenHot7.wav',
+	'sound\fx\npc\hagraven\npc_hagraven_shriek_01.wav'
+]
+Breathing = [
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium1.wav',
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium2.wav',
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium3.wav',
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium4.wav',
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium5.wav',
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium6.wav',
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium7.wav',
+	'Sound\MNC\Hagraven\Medium Sounds\HagravenMedium8.wav',
+	'sound\fx\npc\hagraven\npc_hagraven_conscious_01_lp.wav',
+	'sound\fx\npc\hagraven\npc_hagraven_conscious_02_lp.wav'
+]
+
+[[slot]]
+id = "C28"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot1.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot2.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot3.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot4.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot5.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot6.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot7.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot8.wav',
+	'Sound\MNC\Dragon\Hot Sounds\Dragon_Hot9.wav'
+]
+Breathing = [
+	'Sound\MNC\Dragon\Mild Sounds\Dragon_Mild1.wav',
+	'Sound\MNC\Dragon\Mild Sounds\Dragon_Mild2.wav',
+	'Sound\MNC\Dragon\Mild Sounds\Dragon_Mild3.wav',
+	'Sound\MNC\Dragon\Medium Sounds\Dragon_Medium2.wav'
+]
+
+[[slot]]
+id = "C29"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\netch\aggrowarning\npc_netch_aggrowarning_01.wav',
+	'sound\fx\dlc02\npc\netch\aggrowarning\npc_netch_aggrowarning_02.wav',
+	'sound\fx\dlc02\npc\netch\attack\npc_netch_attackpowera_02.wav'
+]
+Breathing = [
+	'sound\fx\dlc02\npc\netch\attack\npc_netch_attacka_01.wav',
+	'sound\fx\dlc02\npc\netch\attack\npc_netch_attacka_02.wav',
+	'sound\fx\dlc02\npc\netch\conscious\a\npc_big_netch_conscious_a_01_lp.wav',
+	'sound\fx\dlc02\npc\netch\conscious\a\npc_big_netch_conscious_a_02_lp.wav'
+]
+
+[[slot]]
+id = "C30"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\ashghoul\npc_ashghoul_injured_01.wav',
+	'sound\fx\dlc02\npc\ashghoul\npc_ashghoul_injured_02.wav',
+	'sound\fx\dlc02\npc\ashghoul\npc_ashghoul_death_01.wav'
+]
+Breathing = [
+	'sound\fx\dlc02\npc\ashghoul\npc_ashghoul_breathe_01_lp.wav',
+	'sound\fx\dlc02\npc\ashghoul\npc_ashghoul_breathe_02_lp.wav',
+	'sound\fx\dlc02\npc\ashghoul\npc_ashghoul_breathe_03_lp.wav'
+]
+
+[[slot]]
+id = "C31"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\seeker\npc_seeker_death_2d_01.wav',
+	'sound\fx\dlc02\npc\seeker\npc_seeker_death_2d_02.wav',
+	'sound\fx\dlc02\npc\seeker\npc_seeker_injured_04_2d.wav'
+]
+Breathing = [
+	'sound\fx\dlc02\npc\seeker\npc_seeker_breathe_01_lp.wav',
+	'sound\fx\dlc02\npc\seeker\npc_seeker_breathe_02_lp.wav',
+	'sound\fx\dlc02\npc\seeker\attackspell\npc_seeker_attackspell_03.wav',
+	'sound\fx\dlc02\npc\seeker\attackspell\npc_seeker_attackspell_02.wav'
+]
+
+[[slot]]
+id = "C32"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\atronachflame\death\npc_atronachflame_death_01.wav',
+	'sound\fx\npc\atronachflame\attack\a\npc_atronachflame_attack_a_01.wav'
+]
+Breathing = [
+	'sound\fx\npc\atronachflame\npc_atronachflame_conscious_lp.wav',
+	'sound\fx\npc\atronachflame\attack\b\npc_atronachflame_attack_b_01.wav',
+	'sound\fx\npc\atronachflame\npc_atronachflame_movement_lpm.wav'
+]
+
+[[slot]]
+id = "C33"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\atronachfrost\death\npc_atronachfrost_death_01.wav',
+	'sound\fx\npc\atronachfrost\npc_atronachfrost_combatidle_02.wav'
+]
+Breathing = [
+	'sound\fx\npc\atronachfrost\npc_atronachfrost_breathe_lp.wav',
+	'sound\fx\npc\atronachfrost\attackpower\01\b\npc_atronachfrost_attackpower_01_b_01.wav'
+]
+
+[[slot]]
+id = "C34"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\atronachstorm\death\npc_atronachstorm_death_01.wav',
+	'sound\fx\npc\atronachstorm\death\npc_atronachstorm_death_03.wav',
+	'sound\fx\npc\atronachstorm\attackpower\npc_atronachstorm_attackpower_forward_01.wav',
+	'sound\fx\npc\atronachstorm\attackpower\bomb\npc_atronachstorm_attackpower_bomb_01.wav'
+]
+Breathing = [
+	'sound\fx\npc\atronachstorm\npc_atronachstorm_conscious_lp.wav',
+	'sound\fx\npc\atronachfrost\attackpower\01\b\npc_atronachfrost_attackpower_01_b_01.wav'
+]
+
+[[slot]]
+id = "C35"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\dragonpriest\death\npc_dragonpriest_death_01.wav',
+	'sound\fx\npc\dragonpriest\death\npc_dragonpriest_death_02.wav',
+	'sound\fx\npc\draugr\voice\dialoguedraugr__0004c5a2_1.wav',
+	'sound\fx\npc\dragonpriest\npc_dragonpriest_coffinappear.wav'
+]
+Breathing = [
+	'sound\fx\npc\dragonpriest\npc_dragonpriest_breathe_lp.wav',
+	'sound\fx\npc\draugr\consciouslp\npc_draugr_conscious_03_lp.wav'
+]
+
+[[slot]]
+id = "C36"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\dwarvencenturion\npc_dwarvencenturion_attackbreath_out.wav',
+	'sound\fx\npc\dwarvencenturion\npc_dwarvencenturion_fullscan.wav',
+	'sound\fx\npc\dwarvencenturion\npc_dwarvencenturion_stall.wav'
+]
+Breathing = [
+	'sound\fx\npc\dwarvencenturion\npc_dwarvencenturion_conscious_lp.wav'
+]
+
+[[slot]]
+id = "C37"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\dwarvensphere\close\npc_dwarvensphere_close_01.wav',
+	'sound\fx\npc\dwarvensphere\npc_dwarvensphere_taunt_01.wav'
+]
+Breathing = [
+	'sound\fx\npc\dwarvensphere\npc_dwarvensphere_conscious_lp.wav',
+	'sound\fx\npc\dwarvensphere\npc_dwarvensphere_scan.wav',
+	'sound\fx\npc\dwarvensphere\npc_dwarvensphere_warn_01.wav'
+]
+
+[[slot]]
+id = "C38"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\dwarvenspider\death\npc_dwarvenspider_death_03.wav',
+	'sound\fx\npc\dwarvenspider\npc_dwarvenspider_idlestall_01.wav'
+]
+Breathing = [
+	'sound\fx\npc\dwarvenspider\npc_dwarvenspider_conscious_lp.wav',
+	'sound\fx\npc\dwarvenspider\npc_dwarvenspider_movement_lpm.wav'
+]
+
+[[slot]]
+id = "C39"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\icewraith\attackwindup\b\npc_icewraith_attackwindup_b_01.wav',
+	'sound\fx\npc\icewraith\attackwindup\b\npc_icewraith_attackwindup_b_02.wav',
+	'sound\fx\npc\icewraith\attackwindup\b\npc_icewraith_attackwindup_b_03.wav'
+]
+Breathing = [
+	'sound\fx\npc\icewraith\foot\walk\npc_icewraith_foot_01.wav',
+	'sound\fx\npc\icewraith\foot\walk\npc_icewraith_foot_02.wav',
+	'sound\fx\npc\icewraith\foot\walk\npc_icewraith_foot_03.wav',
+	'sound\fx\npc\icewraith\foot\walk\npc_icewraith_foot_04.wav',
+	'sound\fx\npc\icewraith\npc_icewraith_breathe_01_lp.wav',
+	'sound\fx\npc\icewraith\npc_icewraith_breathe_02_lp.wav'
+]
+
+[[slot]]
+id = "C40"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\npc\slaughterfish\death\npc_slaughterfish_death_02.wav',
+	'sound\fx\npc\slaughterfish\death\npc_slaughterfish_death_03.wav',
+	'sound\fx\npc\slaughterfish\npc_slaughterfish_locomotion_03.wav'
+]
+Breathing = [
+	'sound\fx\npc\slaughterfish\idle\npc_slaughterfish_combat_idle_01.wav',
+	'sound\fx\npc\slaughterfish\idle\npc_slaughterfish_combat_idle_02.wav',
+	'sound\fx\npc\slaughterfish\idle\npc_slaughterfish_combat_idle_03.wav',
+	'sound\fx\npc\slaughterfish\idle\npc_slaughterfish_main_idle_01.wav'
+]
+
+[[slot]]
+id = "C41"
+sex = "all"
+fallback = "C0"
+[slot.categories]
+Orgasm = [
+	'sound\fx\dlc02\npc\bristleback\attack\a\npc_bristleback_attack_a_01.wav',
+	'sound\fx\dlc02\npc\bristleback\death\npc_bristleback_death_03.wav',
+	'sound\fx\dlc02\npc\bristleback\death\npc_bristleback_death_02.wav',
+	'sound\fx\dlc02\npc\riekling\death\npc_riekling_death_04.wav',
+	'sound\fx\dlc02\npc\riekling\death\npc_riekling_death_03.wav',
+	'sound\fx\dlc02\npc\riekling\attackpowerforward\npc_riekling_attackpowerforward_05.wav',
+	'sound\fx\dlc02\npc\riekling\attackpowerforward\npc_riekling_attackpowerforward_03.wav'
+]
+Breathing = [
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_01_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_02_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\breathe\npc_elk_breathe_03_lp.wav',
+	'sound\fx\dlc02\npc\bristleback\recoil\npc_bristleback_recoil_snort_a_01.wav',
+	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_01_lp.wav',
+	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_02_lp.wav',
+	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_03_lp.wav'
+]

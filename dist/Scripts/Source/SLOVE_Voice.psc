@@ -1020,7 +1020,7 @@ EndFunction
 ;before - so there is no variation gate and vA/vB packs are unaffected. Tokens
 ;come from the [tags] vocabulary in SLO VE's base AudioUtil.toml (see
 ;SLOVE Packs\Variation-D-Tagged-Voicepack-Spec.md).
-String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir = "", String actPlace = "")
+String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir = "", String actPlace = "", String actImp = "")
 	String f = extraFacts
 	;intensity - the scene-wide beat
 	if ASLcurrentlyIntense
@@ -1065,7 +1065,7 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 	if speaker != mainFemaleActor && actDir == "" && actPlace == ""
 		snap = SLOVE_PPA.Read(speaker)
 	endif
-	String[] act = ResolveSpeakerAct(speaker, actDir, actPlace, snap)
+	String[] act = ResolveSpeakerAct(speaker, actDir, actPlace, actImp, snap)
 	if act[0] != ""
 		f += " " + act[0]
 	endif
@@ -1096,7 +1096,7 @@ EndFunction
 ;creature in a creature scene) and NOBODY else: a third speaker, e.g. a second
 ;female NPC crying out on her own, gets no act facts at all, because inverting
 ;the lead's direction would state something about her we never measured.
-String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String actPlace = "", float[] ppaSnap = None)
+String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String actPlace = "", String actImp = "", float[] ppaSnap = None)
 	bool lead = (speaker == mainFemaleActor)
 	String dir = ""
 	String place = ""
@@ -1110,13 +1110,16 @@ String[] Function ResolveSpeakerAct(Actor speaker, String actDir = "", String ac
 		;from the lead's perspective, like the labels themselves.
 		dir = actDir
 		place = actPlace
-		if dir == "rcv" && place == "oral"
+		if actImp != ""
+			;the line names its implement too. dir+place alone cannot separate a blowjob
+			;from a licking/rimming line - both are "giv oral" - and the label test that
+			;could is wrong for a caller whose labels have moved on since it snapshotted
+			;the act (the cum-remark beats). "none" = nothing penetrates.
+			if actImp != "none"
+				imp = actImp
+			endif
+		elseif dir == "rcv" && place == "oral"
 			imp = LeadImplement() ;someone's mouth is on HER - the implement is hers
-		elseif place == "oral" && (IsCunnilingus() || IsRimming())
-			;her mouth is on someone but nothing penetrates it - the same answer the
-			;IsCunnilingus() || IsRimming() branch below gives. OralLabel is ONE label,
-			;so this can never be a blowjob, which does carry the partner's implement.
-			imp = ""
 		else
 			imp = PartnerImplement()
 		endif
@@ -1500,7 +1503,7 @@ EndFunction
 
 
 ;--------------------------- menu freeze ------------------------------------
-Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 0, Bool waitForCompletion = True , string debugtext = "None" , Bool SkipWait = false , Actor voiceActor = None , Bool forceFemaleVoice = false , String extraFacts = "" , String actDir = "" , String actPlace = "")
+Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 0, Bool waitForCompletion = True , string debugtext = "None" , Bool SkipWait = false , Actor voiceActor = None , Bool forceFemaleVoice = false , String extraFacts = "" , String actDir = "" , String actPlace = "" , String actImp = "")
 
 	String soundToPlay = thesound
 
@@ -1610,7 +1613,7 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 			;the scene-end check throw away must not pay for a dozen externals first.
 			;Logged alongside the category: it is the only way a pack author can see
 			;which axes a given beat actually varies, rather than guessing from docs.
-			String npcFacts = BuildFacts(audioActor, extraFacts, actDir, actPlace)
+			String npcFacts = BuildFacts(audioActor, extraFacts, actDir, actPlace, actImp)
 			Printdebug("Non PC voice facts : " + debugtext + " (folder " + soundToPlay + ") [" + npcFacts + "]")
 			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, partnerGroup, voiceChannel, npcFacts)
 		endif
@@ -1655,7 +1658,7 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 				pcGroup = "pc_high"
 			endif
 			;see the Non-PC branch above for why the facts are built here and logged
-			String pcFacts = BuildFacts(audioActor, extraFacts, actDir, actPlace)
+			String pcFacts = BuildFacts(audioActor, extraFacts, actDir, actPlace, actImp)
 			Printdebug("PC voice facts : " + debugtext + " (folder " + soundToPlay + ") [" + pcFacts + "]")
 			MasterScript.PlaySound(soundToPlay, audioActor, waitForCompletion, pcGroup, voiceChannel, pcFacts)
 		endif
@@ -1928,13 +1931,13 @@ Function PlayRimjob()
 	;layouts. A pack without them degrades through the config alias/fallback layer to
 	;its own Licking*/Blowjob* audio, then stock (see SLOVE_voices.toml).
 	if MasterScript.HasSceneTag("Forced") || femaleisvictim()
-		PlaySound("RimjobForced", mainFemaleActor, debugtext = "Rimjob Forced", actDir = "giv", actPlace = "oral")
+		PlaySound("RimjobForced", mainFemaleActor, debugtext = "Rimjob Forced", actDir = "giv", actPlace = "oral", actImp = "none")
 	elseif Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !ASLIsBroken()
-		PlaySound("RimjobComments", mainFemaleActor, debugtext = "Rimjob Comments", actDir = "giv", actPlace = "oral")
+		PlaySound("RimjobComments", mainFemaleActor, debugtext = "Rimjob Comments", actDir = "giv", actPlace = "oral", actImp = "none")
 	elseif ASLcurrentlyIntense
-		PlaySound("RimjobIntense", mainFemaleActor, debugtext = "Rimjob Intense", actDir = "giv", actPlace = "oral")
+		PlaySound("RimjobIntense", mainFemaleActor, debugtext = "Rimjob Intense", actDir = "giv", actPlace = "oral", actImp = "none")
 	else
-		PlaySound("Rimjob", mainFemaleActor, debugtext = "Rimjob", actDir = "giv", actPlace = "oral")
+		PlaySound("Rimjob", mainFemaleActor, debugtext = "Rimjob", actDir = "giv", actPlace = "oral", actImp = "none")
 	endif
 
 endfunction
@@ -1948,13 +1951,13 @@ Function PlayCunnilingus()
 	;the config alias/fallback layer to its own Blowjob* audio, then stock (see
 	;SLOVE_voices.toml). Comments reuse the blowjob comment chance - same beat.
 	if MasterScript.HasSceneTag("Forced") || femaleisvictim()
-		PlaySound("LickingForced", mainFemaleActor, debugtext = "Licking Forced", actDir = "giv", actPlace = "oral")
+		PlaySound("LickingForced", mainFemaleActor, debugtext = "Licking Forced", actDir = "giv", actPlace = "oral", actImp = "none")
 	elseif Utility.RandomFloat(0.0, 1.0) < ChanceToCommentonBlowjobStage && currentstage > 1 && !ASLIsBroken()
-		PlaySound("LickingComments", mainFemaleActor, debugtext = "Licking Comments", actDir = "giv", actPlace = "oral")
+		PlaySound("LickingComments", mainFemaleActor, debugtext = "Licking Comments", actDir = "giv", actPlace = "oral", actImp = "none")
 	elseif ASLcurrentlyIntense
-		PlaySound("LickingIntense", mainFemaleActor, debugtext = "Licking Intense", actDir = "giv", actPlace = "oral")
+		PlaySound("LickingIntense", mainFemaleActor, debugtext = "Licking Intense", actDir = "giv", actPlace = "oral", actImp = "none")
 	else
-		PlaySound("Licking", mainFemaleActor, debugtext = "Licking", actDir = "giv", actPlace = "oral")
+		PlaySound("Licking", mainFemaleActor, debugtext = "Licking", actDir = "giv", actPlace = "oral", actImp = "none")
 	endif
 
 endfunction
@@ -2911,7 +2914,10 @@ function ASLPlayMaleClosetoOrgasmCommentsVarB()
 	;were dead and this beat reached Variation A only (its other call site,
 	;PossiblyAskForCumInSpecificLocation, sits under a VarB router that returns).
 	;Oral first mirrors the dispatch chain, which also answers oral before the hole.
-	elseif !femaleisvictim() && (IsSuckingoffOther() || IsGettingSuckedoff())
+	;Only IsSuckingoffOther(): her mouth is on him, so "finish in my mouth" is a
+	;coherent request. IsGettingSuckedoff() is the lead's OWN equipment being
+	;serviced - that beat asks for nothing, and keeps its old fall-through.
+	elseif !femaleisvictim() && IsSuckingoffOther()
 		;Male Orgasm Soon Ask For Oral Cum
 		PlaySound("AskForOralCum", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Oral Cum", actDir = OralDir(), actPlace = "oral")
 	elseif	!femaleisvictim() && IsgettingPenetrated()
@@ -2923,8 +2929,9 @@ function ASLPlayMaleClosetoOrgasmCommentsVarB()
 				;Male Orgasm Soon Ask for Anal Cum Intense
 				PlaySound("TeaseMaleCloseToOrgasmIntense", mainFemaleActor, soundPriority = 1 , debugtext = "Male Orgasm Soon Ask For Anal Cum Intense")
 			else
-				;level 0: CurrentPenetrationLvl() answers 0 whenever the stage is LDI or
-				;she is stimulating someone, both of which coincide with penetration.
+				;level 0: CurrentPenetrationLvl() answers 0 while she is stimulating
+				;someone, which coincides with penetration. (Its other level-0 cause,
+				;Primarystagelabel == "LDI", is dead - nothing ever assigns it.)
 				;Without this the arm was entered and played nothing. debugtext == the
 				;category, so no B remap - it falls through the alias/fallback ladder
 				;like the A twin's neutral penetrated beat.

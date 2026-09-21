@@ -1,6 +1,6 @@
 # `AudioUtil.toml` — engine globals
 
-**`Data\SKSE\Plugins\AudioUtil\AudioUtil.toml`** is the **base** config file of the AudioUtil engine. SLO VE ships its own copy holding **only the globals** — the slots and routing live in the additive overlay [`config\SLOVE_voices.toml`](voices.md).
+**`Data\SKSE\Plugins\AudioUtil\AudioUtil.toml`** is the **base** config file of the AudioUtil engine. SLO VE ships its own copy holding **only the globals** — the slots and routing live in the additive [`config\SLOVE_*.toml` overlays](voices.md).
 
 !!! danger "This file must win the load order"
     AudioUtil ships its own SFW-neutral `AudioUtil.toml` that defines nothing. **SLO VE must overwrite it** (install SLO VE below AudioUtil in MO2), or no actor resolves to a voice.

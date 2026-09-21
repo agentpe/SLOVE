@@ -49,7 +49,7 @@ nav:
   - TOML Configuration:
     - Overview — the three files: config/index.md
     - SLOVE.toml — behaviour: config/slove.md
-    - SLOVE_voices.toml — slots & routing: config/voices.md
+    - Voice overlays - slots & routing: config/voices.md
     - AudioUtil.toml — engine globals: config/audioutil.md
   - Willpower / Resistance: resistance.md
   - Tuning Cunnilingus Detection (P+): cunnilingus-detection.md

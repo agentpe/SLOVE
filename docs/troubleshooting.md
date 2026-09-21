@@ -128,7 +128,7 @@ If those lines look healthy and you still hear nothing, work the console command
 3. `au reload` — a fresh install needs a rescan (or a game restart).
 4. `SLOVE_Test AuditVoicePack F1` — a healthy pack reports a high `n/71`, because missing categories backfill from the stock moans. **All** missing means the path is wrong. With AudioUtil **0.9.4+** the summary splits into `(n in-pack, m backfilled)` — **`0 in-pack` is the smoking gun** for "audio plays but it's never the pack": the pack folders aren't being scanned (wrong path / nesting) or the slot lost its pack config (e.g. a Variation-B pack whose `SLOVE_zpack_*.toml` was deleted, so the B folder names never match).
 5. `SLOVE_Test SampleCategory F1 Orgasm` — `handle=0` = nothing resolved for that category.
-6. Did an update overwrite your `SLOVE_voices.toml` edits? Move them into [your own overlay](packs/female.md#keeping-your-edits-across-updates).
+6. Did an update overwrite your `config\SLOVE_*.toml` edits? Move them into [your own overlay](packs/female.md#keeping-your-edits-across-updates).
 
 ## The wrong actor has the wrong voice
 

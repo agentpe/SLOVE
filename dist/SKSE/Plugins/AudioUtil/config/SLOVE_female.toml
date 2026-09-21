@@ -1,0 +1,864 @@
+# AudioUtil overlay - SLO VE: every FEMALE voice slot (additive content).
+#
+# One of SLO VE's four AudioUtil overlays, split by what they hold:
+#   SLOVE_creatures.toml  creature slots C0-C41 + the race hints routing them
+#   SLOVE_female.toml     THIS FILE - female slots
+#   SLOVE_male.toml       male slots
+#   SLOVE_voices.toml     actor->slot routing, category maps, groups, SFX slot
+# They merge in sorted filename order (c < f < m < v), then any voicepack's
+# SLOVE_zpack_*.toml last. No slot id is shared between them, so the split is
+# purely additive and the order among these four does not matter.
+#
+# Slots are keyed by id: if a later file defines the same id it replaces the
+# WHOLE slot, no per-category merge. That is how a voicepack claims a pool id.
+#
+# A slot is built from any mix of:
+#   - a scanned folder tree (path = 'Sound\fx\SLOVE\<Id>' holding
+#     <Category>\*.wav subfolders),
+#   - explicit per-category FILE lists ([slot.categories] array values), which
+#     need no loose files and may point into BSA archives,
+#   - per-category FOLDER references ([slot.categories] string values,
+#     'Sound\...' = full Data path, else relative to the slot's path; loose
+#     files only) - the F0 / F0B / F0v* SexLab-moan slots below.
+# Explicit categories win over same-named scanned folders. Every slot names its
+# own full `path`, so this preset never depends on a shared voice_root global.
+#
+# Categories a slot does not list resolve via [category_aliases.female] /
+# [category_fallbacks.female] (SLOVE_voices.toml). Audit any slot in-game:
+# SLOVE_Test AuditVoicePack F1.
+
+# ===========================================================================
+# THE PC SLOT AND THE STOCK VOICES
+# F1  = the PLAYER pack slot (pc_female_slot in the base AudioUtil.toml): scans
+#       Sound\fx\SLOVE\F1 - drop ANY Hentairim-convention female pack there and
+#       it just plays, no config edits. Categories the pack lacks (or the whole
+#       slot, when no pack is installed) backfill per-category from F0.
+# F0  = the stock DEFAULT female voice (default_female_slot): SexLab's own moan
+#       set - loose files every SexLab install already has, nothing bundled,
+#       plain PCM so lipsync works - mapped per category by intensity.
+# F0B = a second stock voice, the classic backfill for the NPC pool slots.
+# The NPC pool F2-F10 and the extra stock voices F0v2-F0v8 follow further down.
+# ===========================================================================
+
+[[slot]]  # player pack slot - any female pack dropped here wins per category
+id = "F1"
+sex = "female"
+path = 'Sound\fx\SLOVE\F1'
+fallback = "F0"
+gag_slot = "F1gag"    # muffled DD-gag voice when the actor wears a gag (see [gag])
+
+# ---- NPC voice-pool slots (F2-F10) ----
+# Female NPCs in scenes spread across these nine ids via the female
+# [voicetype_map] entries in SLOVE_voices.toml. They are declared at the BOTTOM
+# of this file as stubs (an empty pack folder + a stock voice as fallback), so a
+# pack-less install already has nine live, distinct voices. A voicepack claims an
+# id by redefining it in its own config\*.toml overlay: slots are keyed by id and
+# the last file in sorted filename order wins the whole slot, which is why packs
+# ship as SLOVE_zpack_<Name>.toml. Template a pack overlay copies:
+#   [[slot]]
+#   id = "F2"                        # any pool id F2..F10 (pick a free one)
+#   sex = "female"
+#   path = 'Sound\fx\SLOVE\<Pack>'   # the pack's own unique audio folder
+#   fallback = "F0B"                 # stock moans for categories the pack lacks
+#                                    # (or F0v2..F0v8 for a specific stock voice)
+#   gag_slot = "F1gag"               # shared muffled gag pool
+#   # variation = "B"                # only if the pack uses the partitioned layout
+
+[[slot]]  # gagged-female voice. Gagged speakers route here via gag_slot. F1gag has
+          # NO fallback and only a GagMoan\ folder, so every requested category
+          # misses here and the [gag] default_category "GagMoan" (AudioUtil.toml)
+          # takes over - playing the muffled gag moans below (~27 atm_*/flat_* clips)
+          # for EVERY gagged line, regardless of pack or variation. Never F0's clear
+          # stock moans, never the pack's spoken line. Do NOT add fallback = "F0"
+          # here: F0 lists nearly every category, so the requested category would
+          # resolve to a clear stock moan and GagMoan would never play. (To override
+          # a single beat, drop a pack-specific muffled clip in as a named category
+          # folder here.)
+id = "F1gag"
+sex = "female"
+path = 'Sound\fx\SLOVE\F1gag'
+
+[[slot]]  # stock default female - SexLab voice vFemaleMoan01 (27 mild / 27 medium / 8 hot)
+id = "F0"
+sex = "female"
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+Satisfied = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+SensitivePleasure = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+ForeplaySoft = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+ReadyToGetGoing = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+BlowjobRemarks = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+PenetrativeCommentsSoft = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+AfterOrgasmArouse = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+AfterOrgasmExclamations = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+AfterOrgasmRemarks = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+NoticeMaleWantsMore = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+Amused = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+Unamused = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+UnamusedEnd = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+Oh = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+MaleOrgasmReactionSoft = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+MaleCloseTeaseSoft = 'Sound\fx\SexLab\vFemaleMoan01\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+InsertionGeneric = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+InsertionAnalSlow = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+PenetrativeGrunts = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+OnTheAttack = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+AfterGape = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+MaleCloseAlready = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+MaleCloseNotice = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+AskForVaginalCum = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+AskForAnalCum = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+AskForOralCum = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+PullOut = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+PullOutGape = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch; voice engine requests this on penetration-start (also a SFX0 category)
+MaleOrgasmOral = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+MaleOrgasmNonOral = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+CameInAss = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+CameInMouth = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+CameInPussy = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+WantMore = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+BreathyIntense = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+InAwe = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+TeaseAggressivePartner = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+MaleCloseTeaseIntense = 'Sound\fx\SexLab\vFemaleMoan01\medium'
+# hot: near-orgasm / climax-adjacent
+IntenseAnal = 'Sound\fx\SexLab\vFemaleMoan01\hot'
+NearOrgasmNoises = 'Sound\fx\SexLab\vFemaleMoan01\hot'
+NearOrgasmExclamations = 'Sound\fx\SexLab\vFemaleMoan01\hot'
+CumTogetherTease = 'Sound\fx\SexLab\vFemaleMoan01\hot'
+MyTurnToCum = 'Sound\fx\SexLab\vFemaleMoan01\hot'
+SurprisedByMaleOrgasm = 'Sound\fx\SexLab\vFemaleMoan01\hot'
+MaleOrgasmReactionIntense = 'Sound\fx\SexLab\vFemaleMoan01\hot'
+# blowjob action = SexLab's oral sfx; Orgasm = hot moans + dedicated cries
+BlowjobActionSoft = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm = [
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_01.wav',
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_02.wav',
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_03.wav',
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_04.wav',
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_05.wav',
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_06.wav',
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_07.wav',
+  'Sound\fx\SexLab\vFemaleMoan01\hot\hot_moans_08.wav',
+  'Sound\fx\SexLab\fxOrgasm01\01.wav',
+  'Sound\fx\SexLab\fxOrgasm01\02.wav',
+]
+
+[[slot]]  # stock partner/follower moans - SexLab voice vFemaleMoan03 (20 mild / 10 medium / 9 hot)
+id = "F0B"
+sex = "female"
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Satisfied = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+SensitivePleasure = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+ForeplaySoft = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+ReadyToGetGoing = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+BlowjobRemarks = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+PenetrativeCommentsSoft = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+AfterOrgasmArouse = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+AfterOrgasmExclamations = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+AfterOrgasmRemarks = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+NoticeMaleWantsMore = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Amused = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Unamused = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+UnamusedEnd = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Oh = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+MaleOrgasmReactionSoft = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+MaleCloseTeaseSoft = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+InsertionGeneric = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+InsertionAnalSlow = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+PenetrativeGrunts = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+OnTheAttack = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AfterGape = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleCloseAlready = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleCloseNotice = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AskForVaginalCum = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AskForAnalCum = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AskForOralCum = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+PullOut = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+PullOutGape = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch; voice engine requests this on penetration-start (also a SFX0 category)
+MaleOrgasmOral = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleOrgasmNonOral = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+CameInAss = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+CameInMouth = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+CameInPussy = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+WantMore = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+BreathyIntense = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+InAwe = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+TeaseAggressivePartner = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleCloseTeaseIntense = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+# hot: near-orgasm / climax-adjacent
+IntenseAnal = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+NearOrgasmNoises = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+NearOrgasmExclamations = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+CumTogetherTease = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+MyTurnToCum = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+SurprisedByMaleOrgasm = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+MaleOrgasmReactionIntense = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+# blowjob action = SexLab's oral sfx; Orgasm = hot moans + dedicated cries
+BlowjobActionSoft = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm = [
+  'Sound\fx\SexLab\vFemaleMoan03\hot\000.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\002.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\003.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\004.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\005.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\006.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\007.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\008.wav',
+  'Sound\fx\SexLab\vFemaleMoan03\hot\009.wav',
+  'Sound\fx\SexLab\fxOrgasm01\01.wav',
+  'Sound\fx\SexLab\fxOrgasm01\02.wav',
+]
+
+# ===========================================================================
+# STOCK VOICE VARIATIONS AND THE NPC POOL
+# ===========================================================================
+# Female voicepacks are OPTIONAL, so a default install has none - and the two
+# stock voices above would then have the whole female cast sharing F0, because
+# the NPC pool ids F2-F10 are pack-provided and AudioUtil drops ids nothing
+# declares. SexLab ships EIGHT female moan voices (vFemaleMoan01-08) and SLO VE
+# was using two, so the rest are declared below as F0v2-F0v8 and the pool ids
+# are stubbed onto them round-robin.
+#
+# This mirrors what the male side already does in SLOVE_male.toml, where M1-M8
+# each name a different stock slot (M0/M0B/M0C/M0D = vMaleMoan01-04).
+#
+# A PACK IS INSTALLED: its SLOVE_zpack_*.toml sorts last and replaces the whole
+# pool id - its path, its categories, its gag_slot and its own `fallback`. The
+# stubs only fill the ids no pack claimed, so installing or removing a pack
+# needs no edit here. A pack that wants one of these voices under it names it:
+# fallback = "F0v4" instead of F0B.
+#
+# These are stock SexLab assets - loose PCM wav, so lipsync works on them
+# exactly like F0 / F0B. Sound replacers swap the files in place, so this picks
+# up whatever replacer is installed.
+# Same category map as F0 / F0B in SLOVE_voices.toml, pointed at a different
+# voice folder. Reached only as another slot's `fallback`, never by actor
+# routing, so they never steal an actor from a spoken pack.
+# ===========================================================================
+
+[[slot]]  # SexLab vFemaleMoan02 (15 mild / 14 medium / 15 hot)
+id = "F0v2"
+sex = "female"
+fallback = "F0B"   # anything this voice does not list still lands somewhere
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar              = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+Satisfied                  = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+SensitivePleasure          = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+ForeplaySoft               = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+ReadyToGetGoing            = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+BlowjobRemarks             = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+PenetrativeCommentsSoft    = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+AfterOrgasmArouse          = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+AfterOrgasmExclamations    = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+AfterOrgasmRemarks         = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+NoticeMaleWantsMore        = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+Amused                     = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+Unamused                   = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+UnamusedEnd                = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+Oh                         = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+MaleOrgasmReactionSoft     = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+MaleCloseTeaseSoft         = 'Sound\fx\SexLab\vFemaleMoan02\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense            = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+InsertionGeneric           = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+InsertionAnalSlow          = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+PenetrativeGrunts          = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+OnTheAttack                = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+AfterGape                  = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+MaleCloseAlready           = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+MaleCloseNotice            = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+AskForVaginalCum           = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+AskForAnalCum              = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+AskForOralCum              = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+PullOut                    = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+MaleOrgasmOral             = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+MaleOrgasmNonOral          = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+CameInAss                  = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+CameInMouth                = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+CameInPussy                = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+WantMore                   = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+BreathyIntense             = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+InAwe                      = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+TeaseAggressivePartner     = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+MaleCloseTeaseIntense      = 'Sound\fx\SexLab\vFemaleMoan02\medium'
+# hot: near-orgasm / climax-adjacent
+IntenseAnal                = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+NearOrgasmNoises           = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+NearOrgasmExclamations     = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+CumTogetherTease           = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+MyTurnToCum                = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+SurprisedByMaleOrgasm      = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+MaleOrgasmReactionIntense  = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+# blowjob action = SexLab's shared oral sfx (not voiced - same as F0 / F0B);
+# Orgasm = this voice's own hot folder
+BlowjobActionSoft          = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense       = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm                     = 'Sound\fx\SexLab\vFemaleMoan02\hot'
+PullOutGape                = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch, requested on the voice path
+
+[[slot]]  # SexLab vFemaleMoan03 (20 mild / 10 medium / 9 hot)
+id = "F0v3"
+sex = "female"
+fallback = "F0B"   # anything this voice does not list still lands somewhere
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar              = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Satisfied                  = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+SensitivePleasure          = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+ForeplaySoft               = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+ReadyToGetGoing            = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+BlowjobRemarks             = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+PenetrativeCommentsSoft    = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+AfterOrgasmArouse          = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+AfterOrgasmExclamations    = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+AfterOrgasmRemarks         = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+NoticeMaleWantsMore        = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Amused                     = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Unamused                   = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+UnamusedEnd                = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+Oh                         = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+MaleOrgasmReactionSoft     = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+MaleCloseTeaseSoft         = 'Sound\fx\SexLab\vFemaleMoan03\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense            = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+InsertionGeneric           = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+InsertionAnalSlow          = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+PenetrativeGrunts          = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+OnTheAttack                = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AfterGape                  = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleCloseAlready           = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleCloseNotice            = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AskForVaginalCum           = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AskForAnalCum              = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+AskForOralCum              = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+PullOut                    = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleOrgasmOral             = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleOrgasmNonOral          = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+CameInAss                  = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+CameInMouth                = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+CameInPussy                = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+WantMore                   = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+BreathyIntense             = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+InAwe                      = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+TeaseAggressivePartner     = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+MaleCloseTeaseIntense      = 'Sound\fx\SexLab\vFemaleMoan03\medium'
+# hot: near-orgasm / climax-adjacent
+IntenseAnal                = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+NearOrgasmNoises           = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+NearOrgasmExclamations     = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+CumTogetherTease           = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+MyTurnToCum                = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+SurprisedByMaleOrgasm      = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+MaleOrgasmReactionIntense  = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+# blowjob action = SexLab's shared oral sfx (not voiced - same as F0 / F0B);
+# Orgasm = this voice's own hot folder
+BlowjobActionSoft          = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense       = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm                     = 'Sound\fx\SexLab\vFemaleMoan03\hot'
+PullOutGape                = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch, requested on the voice path
+
+[[slot]]  # SexLab vFemaleMoan04 (20 mild / 10 medium / 10 hot)
+id = "F0v4"
+sex = "female"
+fallback = "F0B"   # anything this voice does not list still lands somewhere
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar              = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+Satisfied                  = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+SensitivePleasure          = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+ForeplaySoft               = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+ReadyToGetGoing            = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+BlowjobRemarks             = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+PenetrativeCommentsSoft    = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+AfterOrgasmArouse          = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+AfterOrgasmExclamations    = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+AfterOrgasmRemarks         = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+NoticeMaleWantsMore        = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+Amused                     = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+Unamused                   = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+UnamusedEnd                = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+Oh                         = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+MaleOrgasmReactionSoft     = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+MaleCloseTeaseSoft         = 'Sound\fx\SexLab\vFemaleMoan04\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense            = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+InsertionGeneric           = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+InsertionAnalSlow          = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+PenetrativeGrunts          = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+OnTheAttack                = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+AfterGape                  = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+MaleCloseAlready           = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+MaleCloseNotice            = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+AskForVaginalCum           = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+AskForAnalCum              = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+AskForOralCum              = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+PullOut                    = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+MaleOrgasmOral             = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+MaleOrgasmNonOral          = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+CameInAss                  = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+CameInMouth                = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+CameInPussy                = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+WantMore                   = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+BreathyIntense             = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+InAwe                      = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+TeaseAggressivePartner     = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+MaleCloseTeaseIntense      = 'Sound\fx\SexLab\vFemaleMoan04\medium'
+# hot: near-orgasm / climax-adjacent
+IntenseAnal                = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+NearOrgasmNoises           = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+NearOrgasmExclamations     = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+CumTogetherTease           = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+MyTurnToCum                = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+SurprisedByMaleOrgasm      = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+MaleOrgasmReactionIntense  = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+# blowjob action = SexLab's shared oral sfx (not voiced - same as F0 / F0B);
+# Orgasm = this voice's own hot folder
+BlowjobActionSoft          = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense       = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm                     = 'Sound\fx\SexLab\vFemaleMoan04\hot'
+PullOutGape                = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch, requested on the voice path
+
+[[slot]]  # SexLab vFemaleMoan05 (19 mild / 10 medium, NO hot folder)
+          # vFemaleMoan05 ships no hot\ folder, so the climax-adjacent
+          # categories below point at medium\ - the SAME actress staying in
+          # character, rather than the fallback handing her climax to another voice.
+id = "F0v5"
+sex = "female"
+fallback = "F0B"   # anything this voice does not list still lands somewhere
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar              = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+Satisfied                  = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+SensitivePleasure          = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+ForeplaySoft               = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+ReadyToGetGoing            = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+BlowjobRemarks             = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+PenetrativeCommentsSoft    = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+AfterOrgasmArouse          = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+AfterOrgasmExclamations    = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+AfterOrgasmRemarks         = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+NoticeMaleWantsMore        = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+Amused                     = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+Unamused                   = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+UnamusedEnd                = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+Oh                         = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+MaleOrgasmReactionSoft     = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+MaleCloseTeaseSoft         = 'Sound\fx\SexLab\vFemaleMoan05\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense            = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+InsertionGeneric           = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+InsertionAnalSlow          = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+PenetrativeGrunts          = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+OnTheAttack                = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+AfterGape                  = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+MaleCloseAlready           = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+MaleCloseNotice            = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+AskForVaginalCum           = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+AskForAnalCum              = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+AskForOralCum              = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+PullOut                    = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+MaleOrgasmOral             = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+MaleOrgasmNonOral          = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+CameInAss                  = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+CameInMouth                = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+CameInPussy                = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+WantMore                   = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+BreathyIntense             = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+InAwe                      = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+TeaseAggressivePartner     = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+MaleCloseTeaseIntense      = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+# medium: near-orgasm / climax-adjacent
+IntenseAnal                = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+NearOrgasmNoises           = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+NearOrgasmExclamations     = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+CumTogetherTease           = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+MyTurnToCum                = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+SurprisedByMaleOrgasm      = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+MaleOrgasmReactionIntense  = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+# blowjob action = SexLab's shared oral sfx (not voiced - same as F0 / F0B);
+# Orgasm = this voice's own medium folder
+BlowjobActionSoft          = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense       = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm                     = 'Sound\fx\SexLab\vFemaleMoan05\medium'
+PullOutGape                = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch, requested on the voice path
+
+[[slot]]  # SexLab vFemaleMoan06 (20 mild / 10 medium, NO hot folder)
+          # vFemaleMoan06 ships no hot\ folder, so the climax-adjacent
+          # categories below point at medium\ - the SAME actress staying in
+          # character, rather than the fallback handing her climax to another voice.
+id = "F0v6"
+sex = "female"
+fallback = "F0B"   # anything this voice does not list still lands somewhere
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar              = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+Satisfied                  = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+SensitivePleasure          = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+ForeplaySoft               = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+ReadyToGetGoing            = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+BlowjobRemarks             = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+PenetrativeCommentsSoft    = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+AfterOrgasmArouse          = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+AfterOrgasmExclamations    = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+AfterOrgasmRemarks         = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+NoticeMaleWantsMore        = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+Amused                     = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+Unamused                   = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+UnamusedEnd                = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+Oh                         = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+MaleOrgasmReactionSoft     = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+MaleCloseTeaseSoft         = 'Sound\fx\SexLab\vFemaleMoan06\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense            = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+InsertionGeneric           = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+InsertionAnalSlow          = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+PenetrativeGrunts          = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+OnTheAttack                = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+AfterGape                  = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+MaleCloseAlready           = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+MaleCloseNotice            = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+AskForVaginalCum           = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+AskForAnalCum              = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+AskForOralCum              = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+PullOut                    = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+MaleOrgasmOral             = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+MaleOrgasmNonOral          = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+CameInAss                  = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+CameInMouth                = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+CameInPussy                = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+WantMore                   = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+BreathyIntense             = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+InAwe                      = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+TeaseAggressivePartner     = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+MaleCloseTeaseIntense      = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+# medium: near-orgasm / climax-adjacent
+IntenseAnal                = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+NearOrgasmNoises           = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+NearOrgasmExclamations     = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+CumTogetherTease           = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+MyTurnToCum                = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+SurprisedByMaleOrgasm      = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+MaleOrgasmReactionIntense  = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+# blowjob action = SexLab's shared oral sfx (not voiced - same as F0 / F0B);
+# Orgasm = this voice's own medium folder
+BlowjobActionSoft          = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense       = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm                     = 'Sound\fx\SexLab\vFemaleMoan06\medium'
+PullOutGape                = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch, requested on the voice path
+
+[[slot]]  # SexLab vFemaleMoan07 (20 mild / 14 medium / 10 hot)
+id = "F0v7"
+sex = "female"
+fallback = "F0B"   # anything this voice does not list still lands somewhere
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar              = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+Satisfied                  = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+SensitivePleasure          = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+ForeplaySoft               = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+ReadyToGetGoing            = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+BlowjobRemarks             = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+PenetrativeCommentsSoft    = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+AfterOrgasmArouse          = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+AfterOrgasmExclamations    = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+AfterOrgasmRemarks         = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+NoticeMaleWantsMore        = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+Amused                     = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+Unamused                   = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+UnamusedEnd                = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+Oh                         = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+MaleOrgasmReactionSoft     = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+MaleCloseTeaseSoft         = 'Sound\fx\SexLab\vFemaleMoan07\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense            = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+InsertionGeneric           = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+InsertionAnalSlow          = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+PenetrativeGrunts          = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+OnTheAttack                = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+AfterGape                  = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+MaleCloseAlready           = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+MaleCloseNotice            = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+AskForVaginalCum           = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+AskForAnalCum              = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+AskForOralCum              = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+PullOut                    = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+MaleOrgasmOral             = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+MaleOrgasmNonOral          = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+CameInAss                  = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+CameInMouth                = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+CameInPussy                = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+WantMore                   = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+BreathyIntense             = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+InAwe                      = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+TeaseAggressivePartner     = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+MaleCloseTeaseIntense      = 'Sound\fx\SexLab\vFemaleMoan07\medium'
+# hot: near-orgasm / climax-adjacent
+IntenseAnal                = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+NearOrgasmNoises           = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+NearOrgasmExclamations     = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+CumTogetherTease           = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+MyTurnToCum                = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+SurprisedByMaleOrgasm      = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+MaleOrgasmReactionIntense  = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+# blowjob action = SexLab's shared oral sfx (not voiced - same as F0 / F0B);
+# Orgasm = this voice's own hot folder
+BlowjobActionSoft          = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense       = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm                     = 'Sound\fx\SexLab\vFemaleMoan07\hot'
+PullOutGape                = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch, requested on the voice path
+
+[[slot]]  # SexLab vFemaleMoan08 (20 mild / 10 medium, NO hot folder)
+          # vFemaleMoan08 ships no hot\ folder, so the climax-adjacent
+          # categories below point at medium\ - the SAME actress staying in
+          # character, rather than the fallback handing her climax to another voice.
+id = "F0v8"
+sex = "female"
+fallback = "F0B"   # anything this voice does not list still lands somewhere
+[slot.categories]
+# mild: greetings / soft / afterglow
+GreetFamiliar              = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+Satisfied                  = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+SensitivePleasure          = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+ForeplaySoft               = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+ReadyToGetGoing            = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+BlowjobRemarks             = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+PenetrativeCommentsSoft    = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+AfterOrgasmArouse          = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+AfterOrgasmExclamations    = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+AfterOrgasmRemarks         = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+NoticeMaleWantsMore        = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+Amused                     = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+Unamused                   = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+UnamusedEnd                = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+Oh                         = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+MaleOrgasmReactionSoft     = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+MaleCloseTeaseSoft         = 'Sound\fx\SexLab\vFemaleMoan08\mild'
+# medium: active / penetrative / reactions
+ForeplayIntense            = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+InsertionGeneric           = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+InsertionAnalSlow          = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+PenetrativeGrunts          = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+PenetrativeCommentsIntense = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+OnTheAttack                = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+AfterGape                  = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+MaleCloseAlready           = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+MaleCloseNotice            = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+AskForVaginalCum           = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+AskForAnalCum              = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+AskForOralCum              = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+PullOut                    = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+MaleOrgasmOral             = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+MaleOrgasmNonOral          = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+CameInAss                  = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+CameInMouth                = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+CameInPussy                = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+WantMore                   = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+BreathyIntense             = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+InAwe                      = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+TeaseAggressivePartner     = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+MaleCloseTeaseIntense      = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+# medium: near-orgasm / climax-adjacent
+IntenseAnal                = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+NearOrgasmNoises           = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+NearOrgasmExclamations     = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+CumTogetherTease           = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+MyTurnToCum                = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+SurprisedByMaleOrgasm      = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+MaleOrgasmReactionIntense  = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+# blowjob action = SexLab's shared oral sfx (not voiced - same as F0 / F0B);
+# Orgasm = this voice's own medium folder
+BlowjobActionSoft          = [
+  'Sound\fx\SexLab\fxOral01\cyupa01.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa02.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa03.wav',
+  'Sound\fx\SexLab\fxOral01\cyupa04.wav',
+]
+BlowjobActionIntense       = [
+  'Sound\fx\SexLab\fxOral01\fera01.wav',
+  'Sound\fx\SexLab\fxOral01\fera02.wav',
+  'Sound\fx\SexLab\fxOral01\fera03.wav',
+]
+Orgasm                     = 'Sound\fx\SexLab\vFemaleMoan08\medium'
+PullOutGape                = 'Sound\fx\SLOVE\Sounds\Pull Out Gape'   # gape squelch, requested on the voice path
+
+# ===========================================================================
+# NPC VOICE-POOL STUBS - what actually spreads the variation
+# ===========================================================================
+# Each pool id points at its own (normally absent) pack folder and names a stock
+# voice as its fallback. Nothing resolves IN the slot, so every category falls
+# straight through to that voice - resolution walks slot -> fallback with a
+# 4-hop cap, so F<n> -> F0v<n> -> F0B still has room.
+#
+# The `path` is REQUIRED, not decoration: AudioUtil skips any [[slot]] that has
+# neither a path nor [slot.categories] ("Skipping [[slot]] entry with missing
+# id, or neither path nor categories"), and a skipped slot never joins the
+# [voicetype_map] spread. It doubles as the drop-in folder for this pool id -
+# put loose <Category>\*.wav in it and the id becomes a real pack, with the
+# stock voice below still backfilling whatever it lacks.
+#
+# On a default install these folders do not exist, so the load log carries one
+# benign "Slot F<n>: folder not found" per id - the same line an unfilled F1
+# (no PC pack) already produces. Routing is unaffected.
+#
+# `gag_slot` is read off the slot the ACTOR resolved to, not off the fallback,
+# so each stub names F1gag itself - otherwise a gagged NPC on a stub would moan
+# clear stock audio straight through her gag.
+#
+# These are the DEFAULT-INSTALL voices. A voicepack overlay claiming the same id
+# replaces the stub outright and brings its own fallback, so there is nothing to
+# uninstall or edit here when a pack goes in. Comment the block out only if you
+# want pack-less female NPCs back on the single shared F0 voice.
+
+[[slot]]
+id = "F2"
+sex = "female"
+path = 'Sound\fx\SLOVE\F2'
+fallback = "F0v2"
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F3"
+sex = "female"
+path = 'Sound\fx\SLOVE\F3'
+fallback = "F0v3"
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F4"
+sex = "female"
+path = 'Sound\fx\SLOVE\F4'
+fallback = "F0v4"
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F5"
+sex = "female"
+path = 'Sound\fx\SLOVE\F5'
+fallback = "F0v5"
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F6"
+sex = "female"
+path = 'Sound\fx\SLOVE\F6'
+fallback = "F0v6"
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F7"
+sex = "female"
+path = 'Sound\fx\SLOVE\F7'
+fallback = "F0v7"
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F8"
+sex = "female"
+path = 'Sound\fx\SLOVE\F8'
+fallback = "F0v8"
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F9"
+sex = "female"
+path = 'Sound\fx\SLOVE\F9'
+fallback = "F0v2"   # wraps - nine pool ids, seven spare voices
+gag_slot = "F1gag"
+
+[[slot]]
+id = "F10"
+sex = "female"
+path = 'Sound\fx\SLOVE\F10'
+fallback = "F0v3"   # wraps - nine pool ids, seven spare voices
+gag_slot = "F1gag"

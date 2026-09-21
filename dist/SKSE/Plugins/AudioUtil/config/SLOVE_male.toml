@@ -1,0 +1,144 @@
+# AudioUtil overlay - SLO VE: every MALE voice slot (additive content).
+#
+# One of SLO VE's four AudioUtil overlays (see the file map at the top of
+# SLOVE_female.toml). Merged in sorted filename order; no slot id is shared with
+# the other three, so the split is purely additive.
+#
+# Slots are keyed by id: a later file defining the same id replaces the WHOLE
+# slot, no per-category merge.
+#
+# M1-M8 are the bundled male packs (Hentairim voice pack assets, shipped with
+# SLO VE under Sound\fx\SLOVE): M1 Even Toned, M2 Argonian, M3 Brute, M4 Nord,
+# M5 Condescending, M6 Dark Elf, M7 Khajiit, M8 Orc. Male actors reach them
+# through [voicetype_map] / [race_map] in SLOVE_voices.toml.
+#
+# Categories a slot does not list resolve via [category_aliases.male] /
+# [category_fallbacks.male] (SLOVE_voices.toml). Audit a slot in-game:
+# SLOVE_Test AuditVoicePack M1.
+
+# Male packs are SPOKEN dirty-talk only (no grunt/breath folders), so each M-slot
+# backfills the non-verbal moan categories from a stock male-moan slot via
+# `fallback` - the male mirror of the female F1->F0 chain. FOUR stock slots
+# (M0/M0B/M0C/M0D = SexLab vMaleMoan01-04) give four distinct moan voices; M1-M8
+# are assigned round-robin so different male NPCs moan differently.
+[[slot]]
+id = "M1"
+sex = "male"
+path = 'Sound\fx\SLOVE\M1'
+fallback = "M0"
+
+[[slot]]
+id = "M2"
+sex = "male"
+path = 'Sound\fx\SLOVE\M2'
+fallback = "M0B"
+
+[[slot]]
+id = "M3"
+sex = "male"
+path = 'Sound\fx\SLOVE\M3'
+fallback = "M0C"
+
+[[slot]]
+id = "M4"
+sex = "male"
+path = 'Sound\fx\SLOVE\M4'
+fallback = "M0D"
+
+[[slot]]
+id = "M5"
+sex = "male"
+path = 'Sound\fx\SLOVE\M5'
+fallback = "M0"
+
+[[slot]]
+id = "M6"
+sex = "male"
+path = 'Sound\fx\SLOVE\M6'
+fallback = "M0B"
+
+[[slot]]
+id = "M7"
+sex = "male"
+path = 'Sound\fx\SLOVE\M7'
+fallback = "M0C"
+
+[[slot]]
+id = "M8"
+sex = "male"
+path = 'Sound\fx\SLOVE\M8'
+fallback = "M0D"
+
+# ---- stock male-moan slots (SexLab vMaleMoan01-04) ----
+# The male mirror of F0: loose PCM every SexLab install has, so lipsync works.
+# Reached as the M1-M8 per-category fallback, so a male PC/partner always has a
+# MOAN for the non-verbal categories the spoken packs don't ship - and M0 is also
+# default_male_slot (AudioUtil.toml), so a male NPC no voicetype/race route claims
+# moans instead of borrowing an arbitrary pack's accent, exactly like F0 for
+# females. Unlike F0 these list only the non-verbal categories, so an unrouted
+# male has no SPOKEN lines - by design; route him via [voicetype_map] to voice him.
+# Intensity split follows the female stock slots: soft = medium, hot = hot.
+[[slot]]
+id = "M0"
+sex = "male"
+[slot.categories]
+PenetrativeGrunts    = 'Sound\fx\SexLab\vMaleMoan01\medium'
+BlowjobActionSoft    = 'Sound\fx\SexLab\vMaleMoan01\medium'
+BreathySoft          = 'Sound\fx\SexLab\vMaleMoan01\medium'
+ForeplaySoft         = 'Sound\fx\SexLab\vMaleMoan01\medium'
+NearOrgasmNoises     = 'Sound\fx\SexLab\vMaleMoan01\hot'
+BlowjobActionIntense = 'Sound\fx\SexLab\vMaleMoan01\hot'
+BreathyIntense       = 'Sound\fx\SexLab\vMaleMoan01\hot'
+ForeplayIntense      = 'Sound\fx\SexLab\vMaleMoan01\hot'
+
+[[slot]]
+id = "M0B"
+sex = "male"
+[slot.categories]
+PenetrativeGrunts    = 'Sound\fx\SexLab\vMaleMoan02\medium'
+BlowjobActionSoft    = 'Sound\fx\SexLab\vMaleMoan02\medium'
+BreathySoft          = 'Sound\fx\SexLab\vMaleMoan02\medium'
+ForeplaySoft         = 'Sound\fx\SexLab\vMaleMoan02\medium'
+NearOrgasmNoises     = 'Sound\fx\SexLab\vMaleMoan02\hot'
+BlowjobActionIntense = 'Sound\fx\SexLab\vMaleMoan02\hot'
+BreathyIntense       = 'Sound\fx\SexLab\vMaleMoan02\hot'
+ForeplayIntense      = 'Sound\fx\SexLab\vMaleMoan02\hot'
+
+[[slot]]
+id = "M0C"
+sex = "male"
+[slot.categories]
+PenetrativeGrunts    = 'Sound\fx\SexLab\vMaleMoan03\medium'
+BlowjobActionSoft    = 'Sound\fx\SexLab\vMaleMoan03\medium'
+BreathySoft          = 'Sound\fx\SexLab\vMaleMoan03\medium'
+ForeplaySoft         = 'Sound\fx\SexLab\vMaleMoan03\medium'
+NearOrgasmNoises     = 'Sound\fx\SexLab\vMaleMoan03\hot'
+BlowjobActionIntense = 'Sound\fx\SexLab\vMaleMoan03\hot'
+BreathyIntense       = 'Sound\fx\SexLab\vMaleMoan03\hot'
+ForeplayIntense      = 'Sound\fx\SexLab\vMaleMoan03\hot'
+
+[[slot]]
+id = "M0D"
+sex = "male"
+[slot.categories]
+PenetrativeGrunts    = 'Sound\fx\SexLab\vMaleMoan04\medium'
+BlowjobActionSoft    = 'Sound\fx\SexLab\vMaleMoan04\medium'
+BreathySoft          = 'Sound\fx\SexLab\vMaleMoan04\medium'
+ForeplaySoft         = 'Sound\fx\SexLab\vMaleMoan04\medium'
+NearOrgasmNoises     = 'Sound\fx\SexLab\vMaleMoan04\hot'
+BlowjobActionIntense = 'Sound\fx\SexLab\vMaleMoan04\hot'
+BreathyIntense       = 'Sound\fx\SexLab\vMaleMoan04\hot'
+ForeplayIntense      = 'Sound\fx\SexLab\vMaleMoan04\hot'
+
+# ---------- SFX: the SFX0 slot ----------
+# Body SFX are a slot like everything else (uniform with the voice packs above):
+# PlaySFX(name) resolves `name` as a category of the sfx slot (id "SFX0", set by
+# AudioUtil's [general] sfx_slot) before the flat [sfx] table. sex = "all" =
+# sex-neutral. Categories are folder refs (full 'Sound\...' paths, case-
+# insensitive); a category could equally be an explicit file list to pull SFX
+# from a BSA. Driven by the SLOVE_SFX body-SFX engine (toggle/tune it in
+# SKSE\Plugins\SLOVE\SLOVE.toml [sfx]). All playable via PlaySFX. Note: the voice
+# engine also requests PullOutGape (on penetration-start) through the VOICE path,
+# which resolves it via the female slots' fallback chain (F1->F0, F2/F3->F0B, where
+# PullOutGape is a category ref) - AudioUtil has no voice->SFX last-resort, so the
+# SFX0 entry below serves PlaySFX only, not the voice call.

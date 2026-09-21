@@ -59,7 +59,7 @@ Then route someone to it. Two ways:
 
 ### Pin one specific NPC — `[npc_overrides]`
 
-Edit `SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml` (or better, [your own overlay](#keeping-your-edits-across-updates)):
+Edit `SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml` - the routing overlay (or better, [your own overlay](#keeping-your-edits-across-updates)):
 
 ```toml
 [npc_overrides]
@@ -133,12 +133,12 @@ This is a **global** key, so it must be set in the base file — an overlay cann
 
 ## Keeping your edits across updates
 
-`SLOVE_voices.toml` ships with SLO VE, so **an update overwrites your edits to it**. AudioUtil merges *every* `config\*.toml` in sorted filename order, and the routing tables are **additive**, so put your customisations in a file of your own:
+SLO VE's `config\SLOVE_*.toml` overlays ship with the mod, so **an update overwrites your edits to them**. AudioUtil merges *every* `config\*.toml` in sorted filename order, and the routing tables are **additive**, so put your customisations in a file of your own:
 
 **`Data\SKSE\Plugins\AudioUtil\config\ZZ_MyVoices.toml`**
 
 ```toml
-# My personal SLO VE voice routing. Sorts after SLOVE_voices.toml, so my
+# My personal SLO VE voice routing. Sorts after SLO VE's own overlays, so my
 # entries win on any key they share.
 
 [npc_overrides]

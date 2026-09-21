@@ -136,7 +136,7 @@ Logs to watch: `Documents\My Games\Skyrim Special Edition\SKSE\AudioUtil.log`
 |---|---|---|---|---|
 | F1 | **Mid-scene save/load re-adoption** | Save mid-scene, reload | Scene re-adopts within ~3 s; voices/faces/SFX resume; **no orphaned spells** | `director.printdebug` re-adopt line; no duplicate ME in `DumpState` |
 | F2 | **Clean scene end** | End any scene | Voices stop, face returns to neutral, SFX stop, SexLab's own moans restore. A climax cry already playing **rings out briefly** on the `*_high` groups before stopping (not clipped — the orgasm line isn't cut the instant the scene ends) | `director.suppresssexlabvoice` self-restores; `DirectorEndScene` stops `*_low`/`sfx`/`oneshot` immediately, `RemoveTracker` rings out `*_high`; silence+neutral = user |
-| F3 | **Live TOML reload** | Edit `SLOVE.toml` + `SLOVE_voices.toml`, run `SLOVE_Config Reload` + `au reload` | New values take effect **without** a game restart | reload lines in both logs; changed behaviour = user |
+| F3 | **Live TOML reload** | Edit `SLOVE.toml` + `SLOVE_female.toml`, run `SLOVE_Config Reload` + `au reload` | New values take effect **without** a game restart | reload lines in both logs; changed behaviour = user |
 | F4 | **SexLab voice/expression suppression** | Any SLO VE scene | No doubled voices; no face jitter (SLO VE silences SexLab's own moans per-scene) | `director.suppresssexlabvoice=1`; single voice = user |
 | F5 | **Log hygiene** | After a full multi-scene session | `AudioUtil.log` free of `no slot resolvable` / `unknown slot` / `no readable PCM wav` spam; `SLOVE.0.log` free of errors | grep both logs |
 

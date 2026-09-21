@@ -72,21 +72,24 @@ sfx_slush_/sfx_ejac_<position>` (SFX).
 
 ## 5. TOML validity + expected shape
 
-Parse all three shipped configs (a parse error makes AudioUtil keep prior/neutral
-settings silently). The AudioUtil preset is two files — the globals-only base
-`AudioUtil.toml` and the content overlay `config\SLOVE_voices.toml`:
+Parse every shipped config (a parse error makes AudioUtil keep prior/neutral
+settings silently). The AudioUtil preset is the globals-only base `AudioUtil.toml`
+plus four content overlays under `config\`:
 
 ```
 python -c "import tomllib; tomllib.load(open(r'...\AudioUtil.toml','rb'))"
-python -c "import tomllib; tomllib.load(open(r'...\config\SLOVE_voices.toml','rb'))"
+python -c "import tomllib,glob; [tomllib.load(open(f,'rb')) for f in glob.glob(r'...\config\SLOVE_*.toml')]"
 python -c "import tomllib; tomllib.load(open(r'...\SLOVE.toml','rb'))"
 ```
 
 **Pass:** all parse; the base `AudioUtil.toml` has only `[general]`/`[ppa]`/
-`[lipsync]`/`[gag]` (no `[[slot]]`/routing — those are overlay-only); and in
-`SLOVE_voices.toml`, creature slots C1–C10 each expose `Orgasm` (plus
-`Breathing` where material exists — C8 legitimately has none), `[race_map]`
-contains the creature hints incl. `Husky`, and the `[sfx]` / `SFX0` slot is present.
+`[lipsync]`/`[gag]` (no `[[slot]]`/routing - those are overlay-only); in
+`SLOVE_creatures.toml`, creature slots C1-C10 each expose `Orgasm` (plus
+`Breathing` where material exists - C8 legitimately has none) and `[race_map]`
+contains the creature hints incl. `Husky`; and the `SFX0` slot is present in
+`SLOVE_voices.toml`. No slot id may appear in two overlays (a duplicate silently
+replaces the whole slot), and no `[[slot]]` may lack both `path` and
+`[slot.categories]` (AudioUtil skips those outright).
 
 ## 6. Config-key sync (scripts ↔ SLOVE.toml)
 
@@ -99,7 +102,7 @@ default-only). Flag keys present in TOML but read by no script (dead config).
 
 ## 7. Asset-path verification (the dog lesson)
 
-File lists and folders in the shipped SLOVE_voices.toml must point at things that
+File lists and folders in the shipped overlays must point at things that
 exist — **never trust a path that wasn't checked**; most creature paths once
 shipped fabricated:
 
@@ -118,7 +121,7 @@ the original silent-dog bug.
 Category strings the engine requests must resolve somewhere: the tables in
 `SLOVE_VoiceCategories.psc`, hardcoded requests (`"Orgasm"`, `"Breathing"`,
 `"Smack"`, `"PullOutGape"`, SFX names in `SLOVE_SFX.psc`), against slot
-folders / `[category_aliases]` / `[male_only_remap]` / `[sfx]` in `SLOVE_voices.toml`.
+folders / `[category_aliases]` / `[male_only_remap]` / `SFX0` in the overlays.
 Spot-check any **newly added** category string end-to-end.
 
 **Pass:** every new/changed category resolves by the documented chain

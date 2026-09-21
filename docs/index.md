@@ -31,7 +31,7 @@ Everything is configured in plain **TOML** files that reload live from the conso
 - [Category Reference](packs/categories.md) — every category name the engines request, its on-disk folder, and what it falls back to
 - [Configuration Overview](config/index.md) — the three TOML files, which one owns what, and how they merge
 - [SLOVE.toml Reference](config/slove.md) — every behaviour key: voice, expressions, sfx, resistance, milk
-- [SLOVE_voices.toml Reference](config/voices.md) — every slot and routing table
+- [Voice Overlays Reference](config/voices.md) - every slot and routing table
 - [AudioUtil.toml Reference](config/audioutil.md) — the engine globals SLO VE sets: lipsync, gag, PPA
 - [Willpower / Resistance](resistance.md) — how the optional break system works and how to tune it
 - [Tuning Cunnilingus Detection (P+)](cunnilingus-detection.md) — the two `SexLab.ini` settings that decide when `CUN` fires
@@ -47,7 +47,10 @@ Data\
   Sound\fx\SLOVE\M1..M8\                  ← bundled male packs
   Sound\fx\SloveSFX\                     ← bundled body-SFX library
   SKSE\Plugins\SLOVE\SLOVE.toml                       ← behaviour: voice, expressions, sfx, resistance, milk
-  SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml     ← the voice slots + actor→voice routing
+  SKSE\Plugins\AudioUtil\config\SLOVE_female.toml     ← female voice slots
+  SKSE\Plugins\AudioUtil\config\SLOVE_male.toml       ← male voice slots
+  SKSE\Plugins\AudioUtil\config\SLOVE_creatures.toml  ← creature voice slots
+  SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml     ← actor→voice routing + SFX
   SKSE\Plugins\AudioUtil\AudioUtil.toml               ← engine globals (lipsync, gag, PPA)
 ```
 

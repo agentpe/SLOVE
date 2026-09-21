@@ -5,8 +5,8 @@
 # default_category toggles — are read ONLY from this base, never from a
 # config\*.toml overlay (an overlay that sets them is ignored + warned). All the
 # voice CONTENT — the slots, the actor->slot routing maps, the category maps and
-# SFX — lives in the additive overlay
-#   SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml
+# SFX - lives in the additive overlays
+#   SKSE\Plugins\AudioUtil\config\SLOVE_{female,male,creatures,voices}.toml
 # and any mod may drop its own config\*.toml to ADD slots / sfx / mappings (they
 # accumulate). Re-read both in-game with  au reload.
 # All key/name matching is case- and space-insensitive.
@@ -65,7 +65,7 @@ default_male_slot = "M0"      # ...and unrouted male NPCs the stock male moans (
 # Creatures (no ActorTypeNPC keyword) never fall through to default_male_slot - they'd
 # borrow a human voice pack (an unmapped frostbite spider spoke M2's Argonian orgasm
 # lines). They take this slot instead, and stop here whether or not it resolves.
-# C0 (SLOVE_voices.toml) is the species-neutral catch-all: any creature the C1-C10
+# C0 (SLOVE_creatures.toml) is the species-neutral catch-all: any creature the C1-C10
 # [race_map] hints don't cover - spiders, foxes, skeevers, modded beasts - breathes and
 # growls from it. A hinted creature still wins with its own slot. Set "" to make
 # uncovered creatures SILENT instead (GetSlotForActor then returns "", which SLOVE_Voice
@@ -122,7 +122,7 @@ block_categories = ["BlowjobActionSoft", "BlowjobActionIntense", "BlowjobAction"
 
 [gag]
 # When a speaking female wears a keyword below, her voice routes through her
-# slot's gag_slot (F1/F2/F3 -> F1gag in SLOVE_voices.toml) for a muffled clip and
+# slot's gag_slot (F1/F2-F10 -> F1gag in SLOVE_female.toml) for a muffled clip and
 # lipsync is suppressed (the device owns the mouth). F1gag holds only "GagMoan",
 # so every gagged line falls through to default_category - muffled, never
 # silence, never a clear line. Keywords are 'Plugin.esp|FormID'; one whose mod

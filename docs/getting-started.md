@@ -54,7 +54,8 @@ AudioUtil  →  voice-pack assets  →  SLO VE (last)
 SLO VE ships its own AudioUtil preset:
 
 - `SKSE\Plugins\AudioUtil\AudioUtil.toml` — engine globals
-- `SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml` — voice slots and actor→voice routing
+- `SKSE\Plugins\AudioUtil\config\SLOVE_female.toml` / `SLOVE_male.toml` / `SLOVE_creatures.toml` - the voice slots
+- `SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml` - actor→voice routing, category maps, the SFX slot
 
 **These must overwrite AudioUtil's neutral defaults** or no actor resolves to a voice. In MO2 that means SLO VE sits **below** AudioUtil in the left pane (higher priority).
 
@@ -91,7 +92,7 @@ Then start a scene. Expected out of the box: the player and female NPCs moan wit
 
 Install the new version over the old one and let it overwrite. **No clean save is needed** for config or audio-only changes.
 
-If you edited `SLOVE_voices.toml` or `AudioUtil.toml` in place, an update overwrites your edits. To keep customisations across updates, put them in **your own overlay file** instead — see [Keeping your edits across updates](packs/female.md#keeping-your-edits-across-updates).
+If you edited one of the `config\SLOVE_*.toml` overlays or `AudioUtil.toml` in place, an update overwrites your edits. To keep customisations across updates, put them in **your own overlay file** instead — see [Keeping your edits across updates](packs/female.md#keeping-your-edits-across-updates).
 
 ## Where to next
 

@@ -1,6 +1,15 @@
-# `SLOVE_voices.toml` — slots & routing reference
+# Voice overlays - slots & routing reference
 
-**`Data\SKSE\Plugins\AudioUtil\config\SLOVE_voices.toml`** is SLO VE's voice **content**: every `[[slot]]`, the actor→slot routing tables, the category maps, and the SFX slot.
+SLO VE's voice **content** lives in four additive overlays under **`Data\SKSE\Plugins\AudioUtil\config\`**: every `[[slot]]`, the actor→slot routing tables, the category maps, and the SFX slot. They are split by what they hold, so the routing layer can be read on its own:
+
+| File | Holds |
+|---|---|
+| `SLOVE_creatures.toml` | creature slots C0-C41 and the `[race_map]` hints that route them |
+| `SLOVE_female.toml` | female slots: the PC slot `F1`, the gag pool `F1gag`, the stock voices `F0`/`F0B`/`F0v2`-`F0v8`, and the NPC pool `F2`-`F10` |
+| `SLOVE_male.toml` | male slots: the bundled packs `M1`-`M8` and the stock moan slots `M0`-`M0D` |
+| `SLOVE_voices.toml` | no slots - the actor->slot routing, the category maps, the group volumes and the `SFX0` slot |
+
+They merge in sorted filename order (`c` < `f` < `m` < `v`), then any voicepack's `SLOVE_zpack_*.toml` last. No slot id is shared between them, so the split is purely additive and the order among the four does not matter. This page documents all of them together.
 
 It is an **additive overlay**. AudioUtil loads the base `AudioUtil.toml` first, then merges every `config\*.toml` on top in sorted filename order. Everything on this page is additive and merges across files — you can put your own version of any of it in [your own overlay](../packs/female.md#keeping-your-edits-across-updates).
 
@@ -198,17 +207,19 @@ Orgasm = [
 
 ### The shipped slots
 
-| Slot | Sex | Definition |
-|---|---|---|
-| `F1` | female | scans `Sound\fx\SLOVE\F1`, `fallback = "F0"`, `gag_slot = "F1gag"` |
-| `F2` | female | scans `Sound\fx\SLOVE\F2`, `fallback = "F0B"`, `gag_slot = "F1gag"` |
-| `F3` | female | scans `Sound\fx\SLOVE\F3`, `fallback = "F0B"`, `gag_slot = "F1gag"` |
-| `F1gag` | female | scans `Sound\fx\SLOVE\F1gag` — one `GagMoan` pool, **no fallback** |
-| `F0` | female | ~50 category folder-refs into SexLab's `vFemaleMoan01` (mild/medium/hot) + explicit `Orgasm` and blowjob-action lists |
-| `F0B` | female | the same mapping over SexLab's `vFemaleMoan03` |
-| `M1`–`M8` | male | scan `Sound\fx\SLOVE\M1`…`M8` |
-| `C1`–`C10` | all | explicit vanilla-BSA file lists, `Orgasm` + usually `Breathing` |
-| `SFX0` | all | ~50 folder refs into `Sound\fx\SloveSFX` (+ `Smack`, `PullOutGape` from `Sound\fx\SLOVE\Sounds`) |
+| Slot | File | Sex | Definition |
+|---|---|---|---|
+| `F1` | female | female | scans `Sound\fx\SLOVE\F1`, `fallback = "F0"`, `gag_slot = "F1gag"` |
+| `F2`-`F10` | female | female | the NPC pool: stubs scanning `Sound\fx\SLOVE\F2`..`F10` (normally empty), `fallback` round-robin over `F0v2`..`F0v8`, `gag_slot = "F1gag"`; a voicepack replaces the id it claims |
+| `F1gag` | female | female | scans `Sound\fx\SLOVE\F1gag`: one `GagMoan` pool, **no fallback** |
+| `F0` | female | female | ~50 category folder-refs into SexLab's `vFemaleMoan01` (mild/medium/hot) + explicit `Orgasm` and blowjob-action lists |
+| `F0B` | female | female | the same mapping over SexLab's `vFemaleMoan03` |
+| `F0v2`-`F0v8` | female | female | the same mapping over `vFemaleMoan02`..`08` (05/06/08 ship no `hot`, so their climax categories use `medium`), `fallback = "F0B"` |
+| `M1`-`M8` | male | male | scan `Sound\fx\SLOVE\M1`..`M8`, `fallback` round-robin over `M0`/`M0B`/`M0C`/`M0D` |
+| `M0`-`M0D` | male | male | non-verbal categories only, folder refs into SexLab's `vMaleMoan01`..`04` |
+| `C0`-`C10` | creatures | all | explicit vanilla-BSA file lists, `Orgasm` + usually `Breathing`; `C0` is the catch-all |
+| `C11`-`C41` | creatures | all | 31 more species, same construction, `fallback = "C0"` (fox and dragon need More Nasty Critters) |
+| `SFX0` | voices | all | ~50 folder refs into `Sound\fx\SloveSFX` (+ `Smack`, `PullOutGape` from `Sound\fx\SLOVE\Sounds`) |
 
 Details per family: [Female packs](../packs/female.md) · [Male, creature, gag & SFX slots](../packs/slots.md).
 

@@ -1,22 +1,48 @@
-# SLO VE - creature voice slots C11-C41 (species coverage beyond SLOVE_voices.toml)
+# AudioUtil overlay - SLO VE: every CREATURE voice slot (additive content).
 #
-# Additive AudioUtil overlay. SLOVE_voices.toml owns C0-C10 (werewolf, draugr,
-# falmer, troll, giant, wolf, dog, chaurus, spriggan, horse) and the generic C0
-# catch-all; this file extends the same scheme to another 31 species and adds the
-# race hints that route them. No slot id and no race hint is shared between the
-# two files, so the merge is purely additive - order does not matter.
+# One of SLO VE's four AudioUtil overlays (see the file map at the top of
+# SLOVE_female.toml). This file owns the whole creature side: slots C0-C41 and
+# the [race_map] hints that route actors to them.
 #
-# Every slot is built the same way as C0-C10: vanilla (or More Nasty Critters)
-# sound files named as an explicit file list, because folder SCANS cannot see
-# BSA-packed audio - only an explicit list resolves through the engine's loader.
+# C1-C41 are reached by the race hints below; C0 is the catch-all every other
+# creature lands on (default_creature_slot in the base AudioUtil.toml). Race
+# hints are substring-matched against the race editor id, longest hint first,
+# and accumulate across every overlay, so a patch can add species without
+# touching this file.
+#
+# Every slot is an explicit file list of vanilla (or More Nasty Critters) sound
+# files, because folder SCANS cannot see BSA-packed audio - only an explicit
+# list resolves through the engine's resource loader. Paths are verified against
+# the SE archive listing; vanilla ships no Sound\FX material at all for some
+# creatures (Falmer and Spriggan combat barks live in the voice archives, not
+# fx), which is why some lists are thin.
+#
+# Two categories per slot: Orgasm fires at climax, Breathing is rolled
+# periodically by SLOVE_Voice during the scene (see SLOVE.toml [voice]
+# creaturebreathing*). A slot with no usable ambience material omits Breathing -
+# the [category_fallbacks.male] Breathing = "Orgasm" hop then covers it (creature
+# slots share the male category tables), so C8 growls its Orgasm pool instead.
 #
 # DEPENDENCY: the fox (C19) and dragon (C28) slots are sourced ENTIRELY from
 # More Nasty Critters, and the lurker (C23) and hagraven (C27) slots mostly so.
-# Without MNC installed those categories resolve nothing - which is why every
-# slot here carries fallback = "C0", so a missing file degrades to the generic
+# Without MNC installed those categories resolve nothing - which is why the
+# C11-C41 slots carry fallback = "C0", so a missing file degrades to the generic
 # creature growls instead of to silence.
 
 [race_map]
+# ---- C0-C10 (base species) ----
+Werewolf = "C1"
+Draugr = "C2"            # skeletons are NOT covered - add a Skeleton hint if wanted
+Falmer = "C3"
+Troll = "C4"
+Giant = "C5"
+Wolf = "C6"
+Dog = "C7"
+Husky = "C7"             # DLC1HuskyRace / armored huskies don't contain "Dog"
+Chaurus = "C8"           # includes Reaper and Hunter variants
+Spriggan = "C9"          # includes Matron
+Horse = "C10"
+# ---- C11-C41 (extended species) ----
 DLC1DeathHoundRace = "C6"
 DLC2RieklingRace = "C11"
 SkeletonArmorRace = "C12"
@@ -616,4 +642,209 @@ Breathing = [
 	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_01_lp.wav',
 	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_02_lp.wav',
 	'sound\fx\dlc02\npc\riekling\consciouslp\npc_riekling_conscious_03_lp.wav'
+]
+
+
+# ===========================================================================
+# BASE SPECIES - C0-C10
+# ===========================================================================
+# The generic catch-all plus the ten species SLO VE has always covered.
+# Same construction as C11-C41 above: explicit BSA-resolvable file lists.
+# (dlc01 paths are the Dawnguard files merged into Skyrim - Sounds.bsa.)
+
+[[slot]]  # GENERIC creature catch-all - default_creature_slot in AudioUtil.toml.
+          # Reached by any creature (no ActorTypeNPC keyword) that NO [race_map] hint
+          # covers: spiders, foxes, skeevers, mudcrabs, bears, sabrecats, modded
+          # beasts. Without it those fall out of the chain entirely and stay silent
+          # (they must never reach default_male_slot - everything there is a human
+          # voice pack, which is how an unmapped frostbite spider ended up speaking
+          # M2's Argonian lines). Deliberately species-NEUTRAL: low bear/sabrecat/troll
+          # breaths and growls that read as "some large animal" rather than as any one
+          # creature, since this pool plays for all of them. A creature that deserves
+          # its own voice gets a [race_map] hint + its own C-slot instead, which always
+          # wins over this one. All paths are vanilla Skyrim - Sounds.bsa (verified).
+id = "C0"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Bear\NPC_Bear_AggroWarning_01.wav',
+  'Sound\FX\NPC\Bear\NPC_Bear_AggroWarning_02.wav',
+  'Sound\FX\NPC\Bear\Injured\NPC_Bear_Injured_01.wav',
+  'Sound\FX\NPC\Bear\Injured\NPC_Bear_Injured_02.wav',
+  'Sound\FX\NPC\SabreCat\NPC_SabreCat_IdleCombat_01.wav',
+  'Sound\FX\NPC\SabreCat\NPC_SabreCat_IdleCombat_02.wav',
+  'Sound\FX\NPC\SabreCat\Injured\NPC_SabreCat_Injured_01.wav',
+  'Sound\FX\NPC\SabreCat\Injured\NPC_SabreCat_Injured_02.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Bear\NPC_Bear_Conscious_LP.wav',
+  'Sound\FX\NPC\Bear\NPC_Bear_IdleRooting_01.wav',
+  'Sound\FX\NPC\SabreCat\NPC_SabreCat_Breathe_LP.wav',
+  'Sound\FX\NPC\SabreCat\NPC_SabreCat_AggroWarning_01.wav',
+  'Sound\FX\NPC\SabreCat\NPC_SabreCat_AggroWarning_02.wav',
+  'Sound\fx\npc\troll\npc_troll_breathe_lp.wav',
+]
+
+[[slot]]  # Werewolf
+id = "C1"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Werewolf\Growl\NPC_Werewolf_Growl_01.wav',
+  'Sound\FX\NPC\Werewolf\Growl\NPC_Werewolf_Growl_02.wav',
+  'Sound\FX\NPC\Werewolf\Growl\NPC_Werewolf_Growl_03.wav',
+  'Sound\FX\NPC\Werewolf\Breathe\NPC_Werewolf_Breathe_Out_01.wav',
+  'Sound\FX\NPC\Werewolf\Breathe\NPC_Werewolf_Breathe_Out_02.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Werewolf\Breathe\NPC_Werewolf_Breathe_In_01.wav',
+  'Sound\FX\NPC\Werewolf\Breathe\NPC_Werewolf_Breathe_In_02.wav',
+  'Sound\FX\NPC\Werewolf\Breathe\NPC_Werewolf_Breathe_Out_01.wav',
+  'Sound\FX\NPC\Werewolf\Breathe\NPC_Werewolf_Breathe_Out_02.wav',
+  'Sound\FX\NPC\Werewolf\Growl\NPC_Werewolf_Growl_01.wav',
+]
+
+[[slot]]  # Draugr
+id = "C2"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Draugr\CombatIdle\NPC_Draugr_CombatIdle_1HMTauntA_01.wav',
+  'Sound\FX\NPC\Draugr\CombatIdle\NPC_Draugr_CombatIdle_1HMTauntB_01.wav',
+  'Sound\FX\NPC\Draugr\CombatIdle\NPC_Draugr_CombatIdle_1HMTauntC_01.wav',
+  'Sound\FX\NPC\Draugr\CombatIdle\NPC_Draugr_CombatIdle_2GSTauntA_01.wav',
+  'Sound\FX\NPC\Draugr\Aware\NPC_Draugr_Aware_01.wav',
+  'Sound\FX\NPC\Draugr\Aware\NPC_Draugr_Aware_02.wav',
+  'Sound\FX\NPC\Draugr\Aware\NPC_Draugr_Aware_03.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Draugr\ConsciousLP\NPC_Draugr_Conscious_01_LP.wav',
+  'Sound\FX\NPC\Draugr\ConsciousLP\NPC_Draugr_Conscious_02_LP.wav',
+  'Sound\FX\NPC\Draugr\ConsciousLP\NPC_Draugr_Conscious_03_LP.wav',
+]
+
+[[slot]]  # Falmer (vanilla ships only three falmer fx files - combat barks are dialogue)
+id = "C3"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Falmer\NPC_Falmer_Idle_Detection_01.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Falmer\NPC_Falmer_Breathe_LP.wav',
+]
+
+[[slot]]  # Troll
+id = "C4"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\fx\npc\troll\attack\a\npc_troll_attack_a_01.wav',
+  'Sound\fx\npc\troll\attack\a\npc_troll_attack_a_02.wav',
+  'Sound\fx\npc\troll\attack\a\npc_troll_attack_a_03.wav',
+  'Sound\fx\npc\troll\attack\b\npc_troll_attack_b_01.wav',
+  'Sound\fx\npc\troll\attack\b\npc_troll_attack_b_02.wav',
+  'Sound\fx\npc\troll\attack\b\npc_troll_attack_b_03.wav',
+  'Sound\fx\npc\troll\npc_troll_idlecombat_roar.wav',
+]
+Breathing = [
+  'Sound\fx\npc\troll\npc_troll_breathe_lp.wav',
+  'Sound\fx\npc\troll\idle\npc_troll_idle_01.wav',
+  'Sound\fx\npc\troll\npc_troll_idlecombat_intimidate.wav',
+]
+
+[[slot]]  # Giant
+id = "C5"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Giant\AttackVocal\NPC_Giant_AttackVocal_01.wav',
+  'Sound\FX\NPC\Giant\AttackVocal\NPC_Giant_AttackVocal_02.wav',
+  'Sound\FX\NPC\Giant\AttackVocal\NPC_Giant_AttackVocal_03.wav',
+  'Sound\FX\NPC\Giant\AttackVocal\NPC_Giant_AttackVocal_04.wav',
+  'Sound\FX\NPC\Giant\AttackVocal\NPC_Giant_AttackVocal_05.wav',
+  'Sound\FX\NPC\Giant\AttackVocal\NPC_Giant_AttackVocal_06.wav',
+  'Sound\FX\NPC\Giant\AttackVocal\NPC_Giant_AttackVocal_07.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Giant\NPC_Giant_Conscious_01_LP.wav',
+  'Sound\FX\NPC\Giant\NPC_Giant_Conscious_02_LP.wav',
+  'Sound\FX\NPC\Giant\NPC_Giant_IdleSearching_01.wav',
+]
+
+[[slot]]  # Wolf
+id = "C6"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Wolf\Howl\NPC_Wolf_Howl_01.wav',
+  'Sound\FX\NPC\Wolf\Howl\NPC_Wolf_Howl_02.wav',
+  'Sound\FX\NPC\Wolf\Howl\NPC_Wolf_Howl_03.wav',
+  'Sound\FX\NPC\Wolf\AttackPower\NPC_Wolf_AttackPower_01.wav',
+  'Sound\FX\NPC\Wolf\AttackPower\NPC_Wolf_AttackPower_02.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Wolf\Breathe\NPC_Wolf_Breathe_01.wav',
+  'Sound\FX\NPC\Wolf\Breathe\NPC_Wolf_Breathe_02.wav',
+  'Sound\FX\NPC\Wolf\Breathe\NPC_Wolf_Breathe_03.wav',
+  'Sound\FX\NPC\Wolf\Breathe\NPC_Wolf_Breathe_04.wav',
+]
+
+[[slot]]  # Dog (vanilla dog has no whines - the idle whines/pant are the Dawnguard husky files)
+id = "C7"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Dog\Injured\NPC_Dog_Injured_01.wav',
+  'Sound\FX\NPC\Dog\Injured\NPC_Dog_Injured_02.wav',
+  'Sound\FX\NPC\Dog\Injured\NPC_Dog_Injured_03.wav',
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Idle_Whine_01.wav',
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Idle_Whine_02.wav',
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Idle_Whine_03.wav',
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Idle_Whine_05.wav',
+]
+Breathing = [
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Pant_LPM.wav',
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Idle_Whine_06.wav',
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Idle_Whine_07.wav',
+  'Sound\FX\DLC01\NPC\DogHusky\NPC_DogHusky_Idle_Whine_08.wav',
+]
+
+[[slot]]  # Chaurus (vanilla folder is misspelled 'Charus'; only three fx files exist)
+id = "C8"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Charus\Injured\NPC_Chaurus_Injured_01.wav',
+  'Sound\FX\NPC\Charus\Injured\NPC_Chaurus_Injured_02.wav',
+  'Sound\fx\npc\charus\attack\npc_chaurus_attack_01.wav',
+]
+
+[[slot]]  # Spriggan (a single fx file exists - spriggan voices are dialogue-side)
+id = "C9"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Spriggan\NPC_Spriggan_Conscious_LP.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Spriggan\NPC_Spriggan_Conscious_LP.wav',
+]
+
+[[slot]]  # Horse
+id = "C10"
+sex = "all"
+[slot.categories]
+Orgasm = [
+  'Sound\FX\NPC\Horse\NPC_Horse_RearUp_01.wav',
+  'Sound\FX\NPC\Horse\NPC_Horse_RearUp_02.wav',
+  'Sound\FX\NPC\Horse\NPC_Horse_RearUp_03.wav',
+  'Sound\FX\NPC\Horse\Injured\NPC_Horse_Injured_01.wav',
+  'Sound\FX\NPC\Horse\Injured\NPC_Horse_Injured_02.wav',
+  'Sound\FX\NPC\Horse\Injured\NPC_Horse_Injured_03.wav',
+]
+Breathing = [
+  'Sound\FX\NPC\Horse\NPC_Horse_Breathe_01_LP.wav',
+  'Sound\FX\NPC\Horse\NPC_Horse_Breathe_02_LP.wav',
+  'Sound\FX\NPC\Horse\NPC_Horse_Idle_Paw_01.wav',
 ]

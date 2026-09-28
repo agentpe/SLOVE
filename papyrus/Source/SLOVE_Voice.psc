@@ -67,7 +67,7 @@ Int mainFemaleEnjoyment = 0
 Int mainMaleEnjoyment = 0
 Int partnerOrgasmCount = 0
 Int femaleRecordedOrgasmCount = 0
-Int locationOfLastPartnerOrgasm = 0 ;0 - not set (or other), 1 - oral, 2 - vaginal, 3 = anal
+Int locationOfLastPartnerOrgasm = 0 ;where his climax landed IN HER (CameInHole): 0 - nowhere / not set, 1 - oral, 2 - vaginal, 3 = anal
 Int currentStage = -1 ;Current stage of the scene that is currently playing
 
 Float timeOfLastStageStart = 0.0
@@ -635,7 +635,7 @@ Event OnActorOrgasm(Form actorRef, Int thread)
 		;orgasmerIsSecondaryFemale). The partner (mainMaleActor, often a female
 		;substitute), secondary males, and creatures all still count toward pacing.
 		if !orgasmerIsSecondaryFemale
-			RecordPartnerOrgasm()
+			RecordPartnerOrgasm(actorHavingOrgasm)
 		endif
 
 		if (IsSuckingoffOther() || IsgettingPenetrated()) && (orgasmerIsVoicedMale || orgasmerIsVoicedCreature)
@@ -984,14 +984,43 @@ EndFunction
 
 
 
-Function RecordPartnerOrgasm()
+;Where the partner's climax landed IN HER, for the Came-In remarks: 1 mouth,
+;2 vagina, 3 anus, 0 nowhere. Only her receiving side counts - she is sucking
+;him, or he is inside her - and only for a partner with something to spill
+;(HasCock: a man, a male creature, a schlonged futa). CurrentPenetrationLvl()
+;cannot serve here: it answers the same code for both directions (a lead being
+;sucked reads 1 like a lead sucking), which is how a woman climaxing on a futa
+;lead's cock used to draw "my mouth is flooded". Same ladder as
+;CurrentPenetrationLvl() otherwise - anal before vaginal so a DP (both labels
+;true) keeps its answer, and the ending fallbacks mirror its receiver-only
+;Previously* rungs for a climax that lands on the ending transition.
+Int Function CameInHole(Actor a_orgasmer)
+	if !HasCock(a_orgasmer) || IsStimulatingOthers()
+		return 0
+	elseif IsGettingAnallyPenetrated()
+		return 3
+	elseif IsGettingVaginallyPenetrated()
+		return 2
+	elseif IsSuckingoffOther()
+		return 1
+	elseif IsEnding() && PreviouslyIsSuckingoffOther()
+		return 1
+	elseif IsEnding() && PreviouslyIsGettingAnallyPenetrated()
+		return 3
+	elseif IsEnding() && PreviouslyIsGettingVaginallyPenetrated()
+		return 2
+	endif
+	return 0
+EndFunction
+
+Function RecordPartnerOrgasm(Actor a_orgasmer)
 	;Ordering of some these statements matter because some depend on the others...
 
 	if IsgettingPenetrated()
 		CameInsideCount = CameInsideCount + 1
 	endif
 
-	locationOfLastPartnerOrgasm = CurrentPenetrationLvl()
+	locationOfLastPartnerOrgasm = CameInHole(a_orgasmer)
 
 
 	partnerOrgasmCount += 1
@@ -1033,14 +1062,20 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 	;below would otherwise ask the same externals two or three times per line
 	bool broken = ASLisBroken()
 	bool fVictim = FemaleIsVictim()
-	;mood - the speaker's stance
+	;IsFemdom() spelled out so PartnerLeadsScene() is asked once, not twice
+	bool pLeads = PartnerLeadsScene()
+	bool femdom = !fVictim && IsFemdomScene() && !pLeads
+	;mood - the speaker's stance. dom/sub mirror between the lead and her partner:
+	;whoever leads a dominant-female scene is "dom", the other side of it "sub"
 	if lead
 		if broken
 			f += " broken"
 		elseif fVictim
 			f += " victim"
-		elseif IsFemdom()
+		elseif femdom
 			f += " dom"
+		elseif pLeads
+			f += " sub" ;he rides her, or the Femdom tag is the partner's
 		else
 			f += " neutral"
 		endif
@@ -1048,8 +1083,10 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 		f += " victim"
 	elseif fVictim || broken
 		f += " dom" ;the lead is coerced - her partner runs the scene
-	elseif IsFemdom()
+	elseif femdom
 		f += " sub"
+	elseif pLeads && speaker == mainMaleActor
+		f += " dom"
 	else
 		f += " neutral"
 	endif
@@ -1746,8 +1783,9 @@ EndFunction
 
 Function PossiblyRemarkOnCumLocation()
 	;Go ahead with remark
-	;the location was snapshotted at his orgasm; the labels have moved on since,
-	;so the direction is stated by the remark itself rather than re-derived
+	;the location was snapshotted at his orgasm (CameInHole: her receiving side
+	;only, and only for a partner with something to spill); the labels have moved
+	;on since, so the direction is stated by the remark itself rather than re-derived
 	If locationOfLastPartnerOrgasm == 1
 		PlaySound("CameInMouth", mainFemaleActor, debugtext = "CameInMouth", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
 		Utility.Wait(Utility.RandomFloat(0.75, 1.75))
@@ -1765,8 +1803,9 @@ EndFunction
 
 Function PossiblyRemarkOnCumLocationVarB()
 	;Go ahead with remark
-	;the location was snapshotted at his orgasm; the labels have moved on since,
-	;so the direction is stated by the remark itself rather than re-derived
+	;the location was snapshotted at his orgasm (CameInHole: her receiving side
+	;only, and only for a partner with something to spill); the labels have moved
+	;on since, so the direction is stated by the remark itself rather than re-derived
 	If locationOfLastPartnerOrgasm == 1
 		;Ending Orgasmed Inside Mouth
 		PlaySound("CameInMouth", mainFemaleActor, debugtext = "Ending Orgasmed Inside Mouth", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
@@ -3039,7 +3078,11 @@ function ASLHandlePartnerOrgasmReaction()
 			PlaySound("JokeAfterOrgasm", mainFemaleActor, soundPriority = 2, waitForCompletion = false , debugtext = "JokeAfterOrgasm" , voiceActor = LastOrgasmedPartner())
 		endif
 
-		PlaySound("CameInMouth", mainFemaleActor, soundPriority = 2 , debugtext = "CameInMouth")
+		;only when it landed in HER mouth: CurrentPenetrationLvl() reads 1 for a lead
+		;being sucked too, and a woman climaxing on a futa lead spills nothing
+		if locationOfLastPartnerOrgasm == 1
+			PlaySound("CameInMouth", mainFemaleActor, soundPriority = 2 , debugtext = "CameInMouth", extraFacts = "theirs", actDir = "giv", actPlace = "oral")
+		endif
 
 	elseif IsCowgirl() || IsGivingAnalPenetration() || IsGivingVaginalPenetration()
 
@@ -3617,18 +3660,49 @@ Bool Function IsKissing()
 	return OralLabel == "KIS"
 endfunction
 
-;for Femdom or penetrating others
-Bool Function IsFemdom()
+;the scene-level tests behind IsFemdom(): a "Femdom" tag (or the forced-cowgirl
+;shape with her in slot 0), or her inside / intensely working on him. Both
+;describe the SCENE, not her - PartnerLeadsScene() says whose it is.
+Bool Function IsFemdomScene()
+	if MasterScript.HasSceneTag("Femdom") || (PCPosition == 0 && MasterScript.HasSceneTag("Cowgirl") && MasterScript.HasSceneTag("Forced"))
+		return true
+	endif
+	return IsGivingAnalPenetration() || IsGivingOthersIntenseStimulation || IsGivingVaginalPenetration()
+EndFunction
 
-	if	femaleisvictim()
-		return false
-	elseif  MasterScript.HasSceneTag("Femdom") ||  (PCPosition == 0 && MasterScript.HasSceneTag("Cowgirl") &&  MasterScript.HasSceneTag("Forced"))
-		return TRUE
-	elseif IsGivingAnalPenetration() || IsGivingOthersIntenseStimulation || IsGivingVaginalPenetration()
-		return TRUE
-	else
+;for Femdom or penetrating others: SHE is the dominant one in the scene
+Bool Function IsFemdom()
+	if femaleisvictim()
 		return false
 	endif
+	return IsFemdomScene() && !PartnerLeadsScene()
+EndFunction
+
+;True when the dominant-female scene is the PARTNER's, not hers. IsFemdomScene()'s
+;two tests name no actor: a "Femdom" tag with a woman or futa partner has two
+;candidates, and a giving penetration label says who is inside whom, not who is
+;on top - a partner riding a futa lead used to read "dom" for her, and so did a
+;futa partner inside her under a Femdom tag. Settled from the partner's side:
+;- his submissive flag ends it: she leads whatever the posture (a per-actor
+;  flag, unlike the tags; hers is FemaleIsVictim's business and is asked first)
+;- she is inside him: his to lead only if HIS label says he rides. Authored SLSB
+;  data - the physics overlay keeps a cowgirl code from the tags but never
+;  invents one, so an untagged scene cannot report a rider and keeps her "dom"
+;- a woman or futa is inside her and she is not riding: the Femdom tag, if the
+;  scene has one, describes the partner. A man can never be the fem in it
+;Slot order is deliberately NOT a signal: SexLab sorts females first, so a female
+;lead sits in slot 0 whatever the posture, and "giving from slot 0" would strip
+;"dom" from nearly every scene where she pegs a man.
+Bool Function PartnerLeadsScene()
+	if mainMaleActor == None || MasterScript.IsSubmissive(mainMaleActor)
+		return false
+	elseif IsGivingAnalPenetration() || IsGivingVaginalPenetration()
+		return MasterScript.IsCowgirl(mainMaleActor)
+	elseif IsgettingPenetrated() && !IsCowgirl() && (Sexlab.GetGender(mainMaleActor) % 2) == 1
+		;odd SexLab genders are the female-bodied ones (1 woman/futa, 3 female creature)
+		return MasterScript.HasSceneTag("Femdom")
+	endif
+	return false
 EndFunction
 
 

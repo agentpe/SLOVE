@@ -1062,8 +1062,9 @@ String Function BuildFacts(Actor speaker, String extraFacts = "", String actDir 
 	;below would otherwise ask the same externals two or three times per line
 	bool broken = ASLisBroken()
 	bool fVictim = FemaleIsVictim()
-	;IsFemdom() spelled out so PartnerLeadsScene() is asked once, not twice
-	bool pLeads = PartnerLeadsScene()
+	;IsFemdom() spelled out so PartnerLeadsScene() is asked once, not twice - and
+	;not at all for a victim or broken lead, whose mood is settled before it matters
+	bool pLeads = !fVictim && !broken && PartnerLeadsScene()
 	bool femdom = !fVictim && IsFemdomScene() && !pLeads
 	;mood - the speaker's stance. dom/sub mirror between the lead and her partner:
 	;whoever leads a dominant-female scene is "dom", the other side of it "sub"

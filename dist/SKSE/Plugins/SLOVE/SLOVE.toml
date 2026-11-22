@@ -140,6 +140,7 @@ smoothspeed = 0.75             # Mfg Fix NG transition speed of the face writes:
                                # 0 applies at once. The speed stays on the actor and slides EVERY
                                # channel, AudioUtil's lipsync included, so an authored .lip file
                                # reads like plain loudness lipsync at 0.75. Lip-file packs: try 0.1
+lipsyncspeed = -1.0            # face speed while a voice line moves the mouth; -1 = use smoothspeed. Keep smoothspeed slow (0.75) and set this to 0.1 so lipsync is crisp without the face snapping
 enabletongue = 1              # P+ ONLY. The contact tongue (shown during cunnilingus/blowjob)
                               # needs SexLab P+'s oral-contact detection; the classic variant
                               # has none, so it never shows a contact tongue regardless of this

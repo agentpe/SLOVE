@@ -175,6 +175,8 @@ bool BreathingAllowed = false
 int enablebreathing = 1
 float breathingupdateinseconds = 0.55
 float tonguemouthopenthreshold = 0.4
+float lipsyncspeed = -1.0 ;expressions.lipsyncspeed: face speed while a voice line moves this mouth; below 0 = smoothspeed
+float LastWriteSpeed = -1.0 ;the speed of our last face write - it stays on the actor
 float smoothspeed = 0.75 ;Mfg Fix NG transition speed of the face writes (lower = faster, 0 = at once)
 
 ;per-pass PPA snapshot (see FullExpressionPass) - the penetration checks read
@@ -535,7 +537,11 @@ Bool Function FullExpressionPass()
 	;its target at 1/speed units per second - AudioUtil's per-frame lipsync writes
 	;included. 0.75 blends the face nicely but smears an authored .lip file's
 	;articulation into a loudness-looking jaw; packs that ship lip files lower it.
-	MfgConsoleFuncExt.ApplyExpressionPresetSmooth(actorref, result, false, 0, 1.0, 1.0, 1.0, smoothspeed)
+	LastWriteSpeed = smoothspeed
+	if LipSyncNeedsSpeed()
+		LastWriteSpeed = lipsyncspeed ;a line is moving the mouth: write at its speed, or this slower one would smear it
+	endif
+	MfgConsoleFuncExt.ApplyExpressionPresetSmooth(actorref, result, false, 0, 1.0, 1.0, 1.0, LastWriteSpeed)
 	BreathIntense = Isintense()
 	BreathingAllowed = !(mouthblowjob || MFEEAddTongue || MFEEAddAhegao || EquippedTongue() || IsKissing() || IsCunnilingus())
 
@@ -552,8 +558,23 @@ Function AdvancePhase()
 	endif
 EndFunction
 
+;true while a voice line is moving this actor's mouth and expressions.lipsyncspeed asks
+;for a different face speed during it. The speed of a face write stays on the actor and
+;slides AudioUtil's lipsync writes too, so a face that moves slowly (smoothspeed 0.75)
+;turns lipsync to mush, and one fast enough for lipsync (0.1) makes the breathing nudge
+;and the phase changes snap. Two speeds: smoothspeed for the face, this one under a line.
+Bool Function LipSyncNeedsSpeed()
+	return lipsyncspeed >= 0.0 && lipsyncspeed != smoothspeed && AudioUtil.IsLipSyncActive(actorref) && !LipSyncBlockedForFace
+EndFunction
+
 Function BreathePass()
 	;cheap sub-tick: no MasterScript/SexLab/Json calls, just a mouth nudge around the last applied face
+	;a line started since our last write, which left the slower face speed on the actor:
+	;hand it the lipsync speed with a write that changes nothing (a squint to its own value)
+	if LastWriteSpeed != lipsyncspeed && LipSyncNeedsSpeed()
+		LastWriteSpeed = lipsyncspeed
+		MfgConsoleFuncExt.SetModifier(actorref, 28, MfgConsoleFunc.GetModifier(actorref, 28), lipsyncspeed)
+	endif
 	if !BreathingAllowed
 		return
 	endif
@@ -584,6 +605,7 @@ Function BreathePass()
 	if smoothspeed < nudgespeed
 		nudgespeed = smoothspeed
 	endif
+	LastWriteSpeed = nudgespeed
 	MfgConsoleFuncExt.SetPhoneme(actorref, 0, v, nudgespeed)
 EndFunction
 
@@ -961,6 +983,7 @@ Function InitializeConfigandForms()
 	npcnonintenseexpressionupdateinseconds = SLOVE_Config.GetFloat("expressions.npcnonintenseexpressionupdateinseconds", 2.1)
 	npcintenseexpressionupdateinseconds = SLOVE_Config.GetFloat("expressions.npcintenseexpressionupdateinseconds", 1.6)
 	smoothspeed = SLOVE_Config.GetFloat("expressions.smoothspeed", 0.75)
+	lipsyncspeed = SLOVE_Config.GetFloat("expressions.lipsyncspeed", -1.0)
 	;floors, the menu sliders' minimums: each of these re-arms the update loop, so a
 	;hand-edited zero would run a full pass every frame (breathing 0 still means off)
 	if pcnonintenseexpressionupdateinseconds < 0.5

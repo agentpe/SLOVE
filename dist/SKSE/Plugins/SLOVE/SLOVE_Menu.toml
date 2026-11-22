@@ -544,6 +544,15 @@ max = 2.0
 tip = "Mfg Fix NG slide speed for the face writes: lower is faster, 0 applies at once. The slide also filters AudioUtil's mouth writes, so lower it (0.1) when authored lip files look like plain loudness lipsync in scenes."
 
 [[setting]]
+key = "expressions.lipsyncspeed"
+group = "Updates"
+label = "Face speed during a voice line"
+control = "float"
+min = -1.0
+max = 2.0
+tip = "The slide speed used while a voice line is moving the actor's mouth. -1 uses the face transition speed. Set 0.1 here and leave the face transition speed at 0.75: lipsync stays crisp and the face still moves smoothly between lines."
+
+[[setting]]
 key = "expressions.enabletongue"
 group = "Tongue"
 label = "Contact tongue"

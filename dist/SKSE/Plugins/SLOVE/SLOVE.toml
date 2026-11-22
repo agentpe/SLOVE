@@ -151,6 +151,8 @@ tonguetypeargonian = -1        # the same for Argonians
 removetongueonblowjob = 1
 cunusetongue = 1
 enableahegao = 1               # huge partners trigger ahegao while penetrating
+orgasmahegao = 0               # 1 = a climaxing actor (not males) gets the ahegao eyes (rolled up, brows raised) for the ~4 s of the orgasm face, then recovers. Eyes only: the mouth and its lipsync are untouched
+lipsyncorgasm = 0              # 1 = the orgasm face keeps brows and eyes but leaves the mouth to the voice: a line that starts right after a climax lipsyncs
 # When another mod is driving an actor's ahegao face, SLO VE yields so the two
 # don't fight (that actor's expression writes pause - tongue dropped, mouth
 # handed back - resuming when the signal clears). It watches THREE signals:

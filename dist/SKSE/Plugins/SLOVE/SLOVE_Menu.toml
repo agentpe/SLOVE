@@ -634,6 +634,20 @@ control = "flag"
 tip = "A huge partner brings on the ahegao face while penetrating."
 
 [[setting]]
+key = "expressions.orgasmahegao"
+group = "Ahegao"
+label = "Ahegao eyes on orgasm"
+control = "flag"
+tip = "A climaxing actor gets the ahegao eyes (rolled up, brows raised) for about 4 seconds, then the face recovers. Eyes only: the mouth and its lipsync are left alone. Males are left out."
+
+[[setting]]
+key = "expressions.lipsyncorgasm"
+group = "Ahegao"
+label = "Lipsync through the orgasm face"
+control = "flag"
+tip = "The orgasm face keeps its brows and eyes but leaves the mouth to the voice, so a line that starts right after a climax moves the mouth. Off, the orgasm face holds the mouth open for about 4 seconds and lines started in that time play with a still mouth. Ahegao and tongues keep the mouth either way."
+
+[[setting]]
 key = "expressions.ahegaoitems"
 group = "Yielding to other mods"
 label = "Yield while wearing"

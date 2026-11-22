@@ -1840,6 +1840,13 @@ Function PlaySound(String theSound, Actor actorMakingSound, Int soundPriority = 
 		if soundPriority > 2 && audioActor == mainFemaleActor
 			if theSound == "Orgasm"
 				AudioUtil.DuckGroup("pc_low")
+				;the line she was in the middle of is ducked from here on: stop its lipsync
+				;too, or with expressions.lipsyncorgasm = 1 (the orgasm face no longer claims
+				;the mouth and stops it) her mouth would go on shaping a line nobody hears
+				;under the cry. Without that setting the face stops it a moment later anyway.
+				if AudioUtil.IsLipSyncActive(mainFemaleActor)
+					AudioUtil.StopLipSync(mainFemaleActor)
+				endif
 			else
 				laneFree = SLOVE_Utils.WaitForLane(mainFemaleActor, 4.0)
 				if !laneFree

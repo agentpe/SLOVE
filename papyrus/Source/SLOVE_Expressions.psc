@@ -173,6 +173,9 @@ Event ExpressionsOrgasm(Form akactor, Int thread)
 		Return
 	EndIf
 	IsOrgasming = true
+	if orgasmahegao == 1
+		TicksUntilFull = 0 ;full pass on the next tick, so the ahegao shows within about half a second
+	endif
 	LastOrgasmtime =  CurrentThread.GetTimeTotal()
 
 EndEvent
@@ -456,13 +459,21 @@ Bool Function FullExpressionPass()
 	;partner isn't actually inserted (returns true when no bridge, so labels alone
 	;drive it then)
 	bool brokenface = (enableahegao == 1 && ishugepp && IsgettingPenetrated() && MeasuredPenetrationActive()) || (IsBroken() && (PenisActionlabel != "LDI" || Penetrationlabel != "LDI" || StimulationLabel != "LDI" || OralLabel != "LDI"))
+	;expressions.orgasmahegao = 1: a climaxing non-male actor gets the ahegao EYES (the broken
+	;modifier preset: rolled up, brows raised) for the ~4 s the orgasm face lasts. Eyes only:
+	;the mouth stays with the orgasm preset and the voice, and the MFEE ahegao morph is not
+	;painted - it carries its own open mouth, which stacked on the orgasm mouth and the cry.
+	bool ahegaoface = brokenface || (IsOrgasming && orgasmahegao == 1 && Gender != 0)
 
 	;the orgasm / huge-partner ahegao face owns the open mouth this pass - hand it
 	;the jaw by blocking lipsync (else a playing line lipsyncs over the climax
 	;face). Released automatically once neither is active any more.
-	ApplyFaceMouthOwnership(IsOrgasming || brokenface || MFEEAddAhegao || MFEEAddTongue || tonguearmorworn)
+	;expressions.lipsyncorgasm = 1: the orgasm face keeps brows and eyes but leaves the
+	;mouth to the playing line (the lipsync yield below), so the climax cry and the
+	;lines around it lipsync. Ahegao and tongues still own the mouth.
+	ApplyFaceMouthOwnership((IsOrgasming && lipsyncorgasm != 1) || brokenface || MFEEAddAhegao || MFEEAddTongue || tonguearmorworn)
 
-	float[] result = BuildTickPreset(GetCachedPhase(Phase), varPct, mouthblowjob, brokenface)
+	float[] result = BuildTickPreset(GetCachedPhase(Phase), varPct, mouthblowjob, ahegaoface)
 
 	;MFEE side effects, hoisted out of the per-cell loops so they run once per cycle
 	if MFEEAddAhegao
@@ -936,6 +947,8 @@ int fhutonguetype
 int removetongueonblowjob
 int cunusetongue
 int enableahegao
+int orgasmahegao ;expressions.orgasmahegao: 1 = ahegao face for the seconds of a climax
+int lipsyncorgasm ;expressions.lipsyncorgasm: 1 = the orgasm face does not claim the mouth
 int chancetostickouttongueduringintense
 int chancetostickouttongueduringattacking
 int enableprintdebug
@@ -983,6 +996,8 @@ Function InitializeConfigandForms()
 	removetongueonblowjob = SLOVE_Config.GetInt("expressions.removetongueonblowjob", 1)
 	cunusetongue = SLOVE_Config.GetInt("expressions.cunusetongue", 1)
 	enableahegao = SLOVE_Config.GetInt("expressions.enableahegao", 1)
+	orgasmahegao = SLOVE_Config.GetInt("expressions.orgasmahegao", 0)
+	lipsyncorgasm = SLOVE_Config.GetInt("expressions.lipsyncorgasm", 0)
 	chancetostickouttongueduringintense = SLOVE_Config.GetInt("expressions.chancetostickouttongueduringintense", 30)
 	chancetostickouttongueduringattacking = SLOVE_Config.GetInt("expressions.chancetostickouttongueduringattacking", 10)
 	enableprintdebug = SLOVE_Config.GetInt("expressions.printdebug", 0)
